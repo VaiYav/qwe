@@ -13,7 +13,9 @@ import {
   Chain,
   BNBChain,
   assetToString,
+  baseToAsset,
 } from '@xchainjs/xchain-util'
+import { BinanceLedger } from 'wallet-core/ledger-sdk/binance'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
@@ -29,6 +31,8 @@ export class BnbChain implements IBnbChain {
   private balances: AssetAmount[] = []
 
   private client: BncClient
+
+  private ledgerClient: BinanceLedger | null = null
 
   public readonly chain: Chain
 
@@ -64,6 +68,20 @@ export class BnbChain implements IBnbChain {
   disconnect = () => {
     this.client.purgeClient()
     this.walletType = null
+    this.ledgerClient = null
+  }
+
+  connectLedger = async (addressIndex = 0) => {
+    this.ledgerClient = new BinanceLedger(addressIndex)
+
+    const address = await this.ledgerClient.connect()
+
+    await this.client.getBncClient().initChain()
+
+    // patch getAddress method with ledger address
+    this.client.getAddress = () => address
+
+    this.walletType = WalletOption.LEDGER
   }
 
   connectXdefiWallet = async (xdefiClient: XdefiClient) => {
@@ -166,6 +184,45 @@ export class BnbChain implements IBnbChain {
       const { assetAmount, recipient, memo } = tx
       const { asset } = assetAmount
       const amount = baseAmount(assetAmount.amount.baseAmount, asset.decimal)
+
+      // delegate signing to ledger app
+      if (this.walletType === WalletOption.LEDGER) {
+        if (!this.ledgerClient) throw new Error('ledger not connected')
+
+        const { ledgerClient } = this
+        const ledgerApp = ledgerClient.getLedgerApp()
+
+        console.log('delegate signing to ledger')
+        this.client.getBncClient().useLedgerSigningDelegate(
+          ledgerApp,
+          () => {
+            // ledger pre sign
+            console.log('presign request')
+          },
+          () => {
+            // ledger verify success
+            console.log('ledger signing success')
+          },
+          () => {
+            // ledger verify failed
+          },
+          ledgerClient.derivationPath,
+        )
+
+        const transferResult = await this.client
+          .getBncClient()
+          .transfer(
+            this.client.getAddress(),
+            recipient,
+            baseToAsset(amount).amount().toString(),
+            asset.symbol,
+            memo,
+          )
+
+        return transferResult.result.map(
+          (txResult: { hash?: TxHash }) => txResult?.hash ?? '',
+        )[0]
+      }
 
       return await this.client.transfer({
         asset: asset.getAssetObj(),

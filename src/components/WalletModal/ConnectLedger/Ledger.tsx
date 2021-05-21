@@ -1,37 +1,39 @@
 import React, { useCallback, useState } from 'react'
 
+import { chainToString, Chain } from '@xchainjs/xchain-util'
 import { Form } from 'antd'
-import { supportedChains } from 'multichain-sdk'
+import { SUPPORTED_CHAINS } from 'multichain-sdk'
 
-import { AssetIcon } from 'components/Assets'
-
+import { AssetIcon } from '../../Assets'
 import { Helmet } from '../../Helmet'
-import { Button } from '../../UIElements'
+import { Button, Label } from '../../UIElements'
 import * as Styled from './Ledger.style'
 import { chainToSigAsset } from './types'
 
 type Props = {
-  onConnect: () => void
+  onConnect: (chain: Chain) => void
   loading?: boolean
 }
 
 const LedgerView = ({ onConnect, loading = false }: Props) => {
-  const [activeChain, setActiveChain] = useState('')
+  const [activeChain, setActiveChain] = useState<Chain>()
 
-  const onHandleConnect = useCallback(() => {
-    onConnect()
-  }, [onConnect])
+  const handleConnectLedger = useCallback(() => {
+    if (activeChain) {
+      onConnect(activeChain)
+    }
+  }, [onConnect, activeChain])
 
   return (
     <Styled.Container>
       <Helmet title="Connect Ledger" content="Connect Ledger" />
       <Styled.Header>Connect Ledger</Styled.Header>
-      <Form onFinish={onHandleConnect}>
+      <Form>
         <Styled.Content>
           <Styled.FormLabel color="normal">
             Please select chain to connect.
           </Styled.FormLabel>
-          {supportedChains.map((chain) => {
+          {SUPPORTED_CHAINS.map((chain) => {
             const chainAsset = chainToSigAsset(chain)
 
             return (
@@ -42,9 +44,8 @@ const LedgerView = ({ onConnect, loading = false }: Props) => {
                 fixedWidth={false}
                 onClick={() => setActiveChain(chain)}
               >
+                <Label>{chainToString(chain)}</Label>
                 <AssetIcon asset={chainAsset} size="small" />
-                {chain}
-                <div />
               </Styled.ChainButton>
             )
           })}
@@ -52,12 +53,11 @@ const LedgerView = ({ onConnect, loading = false }: Props) => {
         <Styled.Footer>
           <Styled.FooterContent>
             <Button
-              htmlType="submit"
               round
-              // disabled={!activeChain}
-              disabled
+              disabled={!activeChain}
               loading={loading}
               fixedWidth={false}
+              onClick={handleConnectLedger}
             >
               Connect Ledger
             </Button>

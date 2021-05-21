@@ -43,7 +43,8 @@ import {
   WithdrawParams,
   Wallet,
   ChainWallet,
-  supportedChains,
+  SUPPORTED_CHAINS,
+  LEDGER_SUPPORTED_CHAINS,
   SupportedChain,
   AddLiquidityTxns,
   UpgradeParams,
@@ -57,7 +58,7 @@ type NonETHChainClient = BnbChain | BtcChain | LtcChain | ThorChain
 const THORCHAIN_POOL_ADDRESS = ''
 
 export interface IMultiChain {
-  chains: typeof supportedChains
+  chains: typeof SUPPORTED_CHAINS
   midgard: MidgardV2
   network: string
 
@@ -129,7 +130,7 @@ export class MultiChain implements IMultiChain {
 
   private wallet: Wallet | null = null
 
-  public readonly chains = supportedChains
+  public readonly chains = SUPPORTED_CHAINS
 
   public readonly midgard: MidgardV2
 
@@ -171,18 +172,34 @@ export class MultiChain implements IMultiChain {
     this.bch = new BchChain({ network })
   }
 
-  connectXDefiWallet = async (): Promise<void> => {
-    this.xdefiClient = new XdefiClient(this.network)
+  connectLedger = async ({
+    chain,
+    addressIndex = 0,
+  }: {
+    chain: Chain
+    addressIndex?: number
+  }) => {
+    if (!(chain in LEDGER_SUPPORTED_CHAINS)) {
+      if (chain === BNBChain) {
+        await this.bnb.connectLedger(addressIndex)
+        const ledgerAddress = this.bnb.getClient().getAddress().toLowerCase()
 
-    if (!this.xdefiClient.isWalletDetected()) {
-      throw Error('xdefi wallet not detected')
+        if (!this.wallet) this.initWallets()
+
+        if (this.wallet) {
+          this.wallet = {
+            ...this.wallet,
+            [ETHChain]: {
+              address: ledgerAddress,
+              balance: [],
+              walletType: WalletOption.LEDGER,
+            },
+          }
+        }
+      }
+    } else {
+      throw Error(`Ledger connect is not supprted for ${chain} chain`)
     }
-
-    this.resetClients()
-
-    await this.connectAllClientsToXDefi()
-
-    this.resetWallets()
   }
 
   connectMetamask = async (): Promise<void> => {
@@ -209,6 +226,20 @@ export class MultiChain implements IMultiChain {
         },
       }
     }
+  }
+
+  connectXDefiWallet = async (): Promise<void> => {
+    this.xdefiClient = new XdefiClient(this.network)
+
+    if (!this.xdefiClient.isWalletDetected()) {
+      throw Error('xdefi wallet not detected')
+    }
+
+    this.resetClients()
+
+    await this.connectAllClientsToXDefi()
+
+    this.resetWallets()
   }
 
   // patch client methods to use xdefi request and address
@@ -643,15 +674,15 @@ export class MultiChain implements IMultiChain {
 
       const walletAddress = this.getWalletAddressByChain(swap.outputAsset.chain)
 
-      if (!walletAddress) {
-        return await Promise.reject(new Error('Wallet Address not detected'))
+      const recipientAddress = recipient || walletAddress
+
+      if (!recipientAddress) {
+        return await Promise.reject(new Error('Recipient address is not valid'))
       }
 
       if (swap.hasInSufficientFee) {
         return await Promise.reject(new Error('Insufficient Fee'))
       }
-
-      const recipientAddress = recipient || walletAddress
 
       const inboundData = await this.getInboundDataByChain(
         swap.inputAsset.chain,

@@ -7,6 +7,7 @@ import {
   CloseOutlined,
 } from '@ant-design/icons'
 import { Keystore as KeystoreType } from '@xchainjs/xchain-crypto'
+import { Chain } from '@xchainjs/xchain-util'
 import { WalletStatus } from 'metamask-sdk'
 
 import { useWallet } from 'redux/wallet/hooks'
@@ -20,7 +21,7 @@ import {
   MetaMaskLogoIcon,
   XdefiLogoIcon,
 } from '../Icons'
-import { Overlay, Label } from '../UIElements'
+import { Overlay, Label, Notification } from '../UIElements'
 import ConnectKeystoreView from './ConnectKeystore'
 import ConnectLedgerView from './ConnectLedger'
 import CreateKeystoreView from './CreateKeystore'
@@ -44,6 +45,7 @@ const WalletModal = () => {
     unlockWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectLedger,
     setIsConnectModalOpen,
     isConnectModalOpen,
     walletLoading,
@@ -65,7 +67,25 @@ const WalletModal = () => {
     [unlockWallet, setIsConnectModalOpen],
   )
 
-  const handleConnectLedger = useCallback(() => {}, [])
+  const handleConnectLedger = useCallback(
+    async (chain: Chain) => {
+      try {
+        Notification({
+          type: 'info',
+          message: 'Please confirm your address on the Ledger.',
+        })
+        await connectLedger(chain)
+      } catch (error) {
+        console.error(error)
+        Notification({
+          type: 'error',
+          message: 'Connect Ledger Failed.',
+        })
+      }
+      setIsConnectModalOpen(false)
+    },
+    [connectLedger, setIsConnectModalOpen],
+  )
 
   const handleConnectMetaMask = useCallback(async () => {
     if (metamaskStatus === WalletStatus.NoWeb3Provider) {
@@ -76,7 +96,10 @@ const WalletModal = () => {
       try {
         await connectMetamask()
       } catch (error) {
-        console.log(error)
+        Notification({
+          type: 'error',
+          message: 'Connect Metamask Failed',
+        })
       }
       setIsConnectModalOpen(false)
     }

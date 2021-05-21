@@ -76,7 +76,11 @@ export const ChainButton = styled(Button)`
   margin-bottom: 2px;
 
   &.ant-btn {
+    display: flex;
+    justify-content: space-between;
+
     height: 42px;
+    padding: 0 30px;
   }
 `
 
