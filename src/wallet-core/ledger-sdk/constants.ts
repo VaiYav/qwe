@@ -1,0 +1,1 @@
+export const LEDGER_CONNECT_TIMEOUT = 50000 // 5s

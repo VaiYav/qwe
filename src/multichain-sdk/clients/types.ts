@@ -48,7 +48,7 @@ export type WithdrawParams = {
 }
 
 // note only supported chains
-export const supportedChains = [
+export const SUPPORTED_CHAINS = [
   BTCChain,
   BNBChain,
   THORChain,
@@ -56,7 +56,17 @@ export const supportedChains = [
   LTCChain,
   BCHChain,
 ] as const
-export type SupportedChain = typeof supportedChains[number]
+export type SupportedChain = typeof SUPPORTED_CHAINS[number]
+
+// ledger supported chains
+export const LEDGER_SUPPORTED_CHAINS = [
+  BTCChain,
+  BNBChain,
+  THORChain,
+  ETHChain,
+  LTCChain,
+  BCHChain,
+] as const
 
 export type ApproveParams = {
   spender: string

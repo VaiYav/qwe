@@ -1,3 +1,4 @@
+import { ledger } from '@binance-chain/javascript-sdk'
 import {
   Client as BncClient,
   MultiTransfer,
@@ -14,6 +15,7 @@ import {
   BNBChain,
   assetToString,
 } from '@xchainjs/xchain-util'
+import { BinanceLedger } from 'wallet-core/ledger-sdk/binance'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
@@ -29,6 +31,8 @@ export class BnbChain implements IBnbChain {
   private balances: AssetAmount[] = []
 
   private client: BncClient
+
+  private ledgerApp: BinanceLedger | null = null
 
   public readonly chain: Chain
 
@@ -64,6 +68,15 @@ export class BnbChain implements IBnbChain {
   disconnect = () => {
     this.client.purgeClient()
     this.walletType = null
+    this.ledgerApp = null
+  }
+
+  connectLedger = async (addressIndex = 0) => {
+    this.ledgerApp = new BinanceLedger(addressIndex)
+
+    await this.ledgerApp.connect()
+
+    this.walletType = WalletOption.LEDGER
   }
 
   connectXdefiWallet = async (xdefiClient: XdefiClient) => {
@@ -166,6 +179,31 @@ export class BnbChain implements IBnbChain {
       const { assetAmount, recipient, memo } = tx
       const { asset } = assetAmount
       const amount = baseAmount(assetAmount.amount.baseAmount, asset.decimal)
+
+      // delegate signing to ledger app
+      if (this.walletType === WalletOption.LEDGER && this.ledgerApp) {
+        const { ledgerApp } = this
+
+        await new Promise((resolve, reject) => {
+          this.client.getBncClient().useLedgerSigningDelegate(
+            ledger,
+            () => {}, // ledger pre sign
+            resolve, // ledger verify success
+            () => {
+              // ledger verify failed
+              reject(Error('Ledger verify failed.'))
+            },
+            ledgerApp.derivationPath,
+          )
+        })
+
+        return await this.client.transfer({
+          asset: asset.getAssetObj(),
+          amount,
+          recipient,
+          memo,
+        })
+      }
 
       return await this.client.transfer({
         asset: asset.getAssetObj(),
