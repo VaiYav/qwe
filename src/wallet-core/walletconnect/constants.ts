@@ -1,33 +1,16 @@
 import { CoinType, TW } from '@trustwallet/wallet-core'
-import {
-  BTCChain,
-  BNBChain,
-  ETHChain,
-  LTCChain,
-  THORChain,
-  BCHChain,
-} from '@xchainjs/xchain-util'
+import { BNBChain, ETHChain, THORChain } from '@xchainjs/xchain-util'
 
 export const supportedNetworks: CoinType[] = [
-  CoinType.bitcoin,
   CoinType.binance,
   CoinType.ethereum,
-  CoinType.litecoin,
   CoinType.thorchain,
-  CoinType.bitcoincash,
 ]
 
 export const networkByChain = {
-  [BTCChain]: CoinType.bitcoin,
   [BNBChain]: CoinType.binance,
   [ETHChain]: CoinType.ethereum,
-  [LTCChain]: CoinType.litecoin,
   [THORChain]: CoinType.thorchain,
-  [BCHChain]: CoinType.bitcoincash,
-}
-
-export const ChainId = {
-  [BNBChain]: 'Binance-Chain-Tigris',
 }
 
 export const protoSigningInput = {

@@ -15,13 +15,12 @@ import {
   assetToString,
   baseToAsset,
 } from '@xchainjs/xchain-util'
+import { BinanceLedger } from 'wallet-core/ledger/binance'
 import {
-  TrustWalletClient,
-  ChainId,
-  networkByChain,
-  getSendOrderMsg,
-} from 'trustwallet-sdk'
-import { BinanceLedger } from 'wallet-core/ledger-sdk/binance'
+  WalletConnectClient,
+  getSignRequestMsg,
+  BINANCE_NETWORK_ID,
+} from 'wallet-core/walletconnect'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
@@ -124,63 +123,57 @@ export class BnbChain implements IBnbChain {
     this.walletType = WalletOption.XDEFI
   }
 
-  connectTrustWallet = async (trustwalletClient: TrustWalletClient) => {
-    if (!trustwalletClient) throw Error('trustwallet client not found')
+  connectTrustWallet = async (walletconnectClient: WalletConnectClient) => {
+    if (!walletconnectClient) throw Error('trustwallet client not found')
 
-    const address = trustwalletClient.getAddressByChain(BNBChain)
-    this.client.getAddress = () => address
+    const address = walletconnectClient.getAddressByChain(BNBChain)
 
-    const transfer = async (txParams: ClientTxParams) => {
-      const { asset, amount, recipient, memo } = txParams
-      const bncClient = this.client.getBncClient()
-
-      if (!asset) throw Error('invalid asset to transfer')
-
-      const accountDetails = await bncClient.getAccount(address)
-
-      console.log('ACCOUNT DETAILS - ', accountDetails)
-
-      if (!accountDetails) {
-        return Promise.reject(Error('binance client getAccount error'))
-      }
-
-      const accountInfo = accountDetails.result
-      const coins = [
-        {
-          denom: assetToString(asset),
-          amount: amount.amount().toNumber(),
-        },
-      ]
-
-      const tx = {
-        accountNumber: accountInfo.account_number.toString(),
-        chainId: ChainId[BNBChain],
-        sequence: accountInfo.sequence.toString(),
-        memo,
-        send_order: getSendOrderMsg({
-          fromAddress: address,
-          toAddress: recipient,
-          coins,
-        }),
-      }
-
-      const resp = await trustwalletClient.trustSignTransaction(
-        networkByChain[BNBChain],
-        tx,
-      )
-
-      console.log('RESP - ', resp)
-
-      const bncResp = await bncClient.sendRawTransaction(resp, true)
-
-      console.log('BNC RESP - ', bncResp)
-
-      return ''
-    }
-
-    this.client.transfer = transfer
+    if (!address) throw Error('bnb address not found')
 
     this.walletType = WalletOption.TRUSTWALLET
+
+    // patch getAddress method with walletconnect address
+    this.client.getAddress = () => address
+
+    const bncClient = this.client.getBncClient()
+
+    this.client.transfer = async (txParams: ClientTxParams) => {
+      const { asset, amount, recipient, memo = '' } = txParams
+
+      if (!asset) throw Error('invalid asset')
+
+      const account = await bncClient.getAccount(address)
+      if (!account) throw Error('invalid account')
+
+      const accountNumber = account.result.account_number.toString()
+      const sequence = account.result.sequence.toString()
+      const txParam = {
+        fromAddress: address,
+        toAddress: recipient,
+        denom: asset?.symbol,
+        amount: amount.amount().toNumber(),
+      }
+
+      // get tx signing msg
+      const signRequestMsg = getSignRequestMsg({
+        accountNumber,
+        sequence,
+        memo,
+        txParam,
+      })
+
+      // request tx signing to walletconnect
+      const signedTx = await walletconnectClient.signCustomTransaction({
+        network: BINANCE_NETWORK_ID,
+        tx: signRequestMsg,
+      })
+
+      // broadcast raw tx
+      const res = await bncClient.sendRawTransaction(signedTx, true)
+
+      // return tx hash
+      return res?.result[0]?.hash
+    }
   }
 
   loadBalance = async (): Promise<AssetAmount[]> => {
@@ -257,7 +250,6 @@ export class BnbChain implements IBnbChain {
         const { ledgerClient } = this
         const ledgerApp = ledgerClient.getLedgerApp()
 
-        console.log('delegate signing to ledger')
         this.client.getBncClient().useLedgerSigningDelegate(
           ledgerApp,
           () => {

@@ -25,7 +25,7 @@ import {
   NetworkType as MidgardNetwork,
   InboundAddressesItem,
 } from 'midgard-sdk'
-import { TrustWalletClient } from 'trustwallet-sdk'
+import { WalletConnectClient } from 'wallet-core/walletconnect'
 
 import { XdefiClient } from '../../xdefi-sdk/xdefi'
 import { Swap, Memo, Asset, AssetAmount } from '../entities'
@@ -131,7 +131,7 @@ export class MultiChain implements IMultiChain {
 
   private metamaskClient: MetaMaskClient | null = null
 
-  private trustwalletClient: TrustWalletClient | null = null
+  private trustwalletClient: WalletConnectClient | null = null
 
   private wallet: Wallet | null = null
 
@@ -234,7 +234,7 @@ export class MultiChain implements IMultiChain {
   }
 
   connectTrustWallet = async () => {
-    this.trustwalletClient = new TrustWalletClient()
+    this.trustwalletClient = new WalletConnectClient()
 
     if (!this.trustwalletClient.connected) {
       await this.trustwalletClient.connect()
@@ -244,6 +244,20 @@ export class MultiChain implements IMultiChain {
     if (!this.wallet) this.initWallets()
 
     await this.bnb.connectTrustWallet(this.trustwalletClient)
+    const bnbAddress = this.bnb.getClient().getAddress().toLowerCase()
+
+    if (!this.wallet) this.initWallets()
+
+    if (this.wallet) {
+      this.wallet = {
+        ...this.wallet,
+        [BNBChain]: {
+          address: bnbAddress,
+          balance: [],
+          walletType: WalletOption.TRUSTWALLET,
+        },
+      }
+    }
   }
 
   connectXDefiWallet = async (): Promise<void> => {

@@ -5,7 +5,7 @@ import { IConnector, IWalletConnectOptions } from '@walletconnect/types'
 import { networkByChain, supportedNetworks, errorCodes } from './constants'
 import { IAccount, TWSupportedChain } from './types'
 
-export class TrustWalletClient {
+export class WalletConnectClient {
   connector: IConnector | undefined
 
   accounts: IAccount[] = []
@@ -40,6 +40,12 @@ export class TrustWalletClient {
     return connector
   }
 
+  killSession = async (): Promise<void> => {
+    if (this.connector) {
+      await this.connector.killSession()
+    }
+  }
+
   getAccounts = async (): Promise<IAccount[]> => {
     if (!this.connector) {
       throw new Error(errorCodes.ERROR_SESSION_DISCONNECTED)
@@ -71,10 +77,13 @@ export class TrustWalletClient {
     return selectedAccount.address
   }
 
-  trustSignTransaction = async (
-    network: number,
-    transaction: any,
-  ): Promise<any> => {
+  signCustomTransaction = async ({
+    network,
+    tx,
+  }: {
+    network: number
+    tx: any
+  }): Promise<any> => {
     if (!this.connector) {
       throw new Error(errorCodes.ERROR_SESSION_DISCONNECTED)
     }
@@ -85,15 +94,9 @@ export class TrustWalletClient {
       params: [
         {
           network,
-          transaction: JSON.stringify(transaction),
+          transaction: JSON.stringify(tx),
         },
       ],
     })
-  }
-
-  killSession = async (): Promise<void> => {
-    if (this.connector) {
-      await this.connector.killSession()
-    }
   }
 }

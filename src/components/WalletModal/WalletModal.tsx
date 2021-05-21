@@ -115,7 +115,10 @@ const WalletModal = () => {
       try {
         await connectXdefiWallet()
       } catch (error) {
-        console.log(error)
+        Notification({
+          type: 'error',
+          message: 'Connect XDEFI Wallet Failed',
+        })
       }
       setIsConnectModalOpen(false)
     }
@@ -125,6 +128,10 @@ const WalletModal = () => {
     try {
       await connectTrustWallet()
     } catch (error) {
+      Notification({
+        type: 'error',
+        message: 'Connect TrustWallet Failed',
+      })
       console.log(error)
     }
     setIsConnectModalOpen(false)
