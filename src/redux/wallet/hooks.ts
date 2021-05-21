@@ -56,6 +56,16 @@ export const useWallet = () => {
     }
   }, [dispatch])
 
+  const connectTrustWallet = useCallback(async () => {
+    try {
+      await multichain.connectTrustWallet()
+
+      dispatch(walletActions.getWalletByChain('BNB'))
+    } catch (error) {
+      console.error(error)
+    }
+  }, [dispatch])
+
   const setIsConnectModalOpen = useCallback(
     (visible: boolean) => {
       dispatch(actions.setIsConnectModalOpen(visible))
@@ -78,5 +88,6 @@ export const useWallet = () => {
     disconnectWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
   }
 }

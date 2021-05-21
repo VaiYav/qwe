@@ -265,7 +265,7 @@ export class EthChain implements IEthChain {
           const transactionRequest = {
             from: address,
             to: recipient,
-            value: txAmount,
+            value: txAmount.toHexString(),
             ...overrides,
             data: memo ? toUtf8Bytes(memo) : undefined,
           }
@@ -384,7 +384,7 @@ export class EthChain implements IEthChain {
       const contract = new ethers.Contract(sender, erc20ABI)
       const unsignedTx = await contract.populateTransaction.approve(
         spender,
-        txAmount,
+        txAmount.toHexString(),
         {
           from: address,
           gasPrice,
@@ -454,7 +454,7 @@ export class EthChain implements IEthChain {
           const contract = new ethers.Contract(assetAddress, erc20ABI)
           const unsignedTx = await contract.populateTransaction.transfer(
             recipient,
-            txAmount,
+            txAmount.toHexString(),
             { ...overrides },
           )
           unsignedTx.from = address
@@ -465,7 +465,7 @@ export class EthChain implements IEthChain {
           const transactionRequest = {
             from: address,
             to: recipient,
-            value: txAmount,
+            value: txAmount.toHexString(),
             ...overrides,
             data: memo ? toUtf8Bytes(memo) : undefined,
           }

@@ -14,6 +14,12 @@ import {
   BNBChain,
   assetToString,
 } from '@xchainjs/xchain-util'
+import {
+  TrustWalletClient,
+  ChainId,
+  networkByChain,
+  getSendOrderMsg,
+} from 'trustwallet-sdk'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
@@ -98,6 +104,65 @@ export class BnbChain implements IBnbChain {
     this.client.transfer = transfer
 
     this.walletType = WalletOption.XDEFI
+  }
+
+  connectTrustWallet = async (trustwalletClient: TrustWalletClient) => {
+    if (!trustwalletClient) throw Error('trustwallet client not found')
+
+    const address = trustwalletClient.getAddressByChain(BNBChain)
+    this.client.getAddress = () => address
+
+    const transfer = async (txParams: ClientTxParams) => {
+      const { asset, amount, recipient, memo } = txParams
+      const bncClient = this.client.getBncClient()
+
+      if (!asset) throw Error('invalid asset to transfer')
+
+      const accountDetails = await bncClient.getAccount(address)
+
+      console.log('ACCOUNT DETAILS - ', accountDetails)
+
+      if (!accountDetails) {
+        return Promise.reject(Error('binance client getAccount error'))
+      }
+
+      const accountInfo = accountDetails.result
+      const coins = [
+        {
+          denom: assetToString(asset),
+          amount: amount.amount().toNumber(),
+        },
+      ]
+
+      const tx = {
+        accountNumber: accountInfo.account_number.toString(),
+        chainId: ChainId[BNBChain],
+        sequence: accountInfo.sequence.toString(),
+        memo,
+        send_order: getSendOrderMsg({
+          fromAddress: address,
+          toAddress: recipient,
+          coins,
+        }),
+      }
+
+      const resp = await trustwalletClient.trustSignTransaction(
+        networkByChain[BNBChain],
+        tx,
+      )
+
+      console.log('RESP - ', resp)
+
+      const bncResp = await bncClient.sendRawTransaction(resp, true)
+
+      console.log('BNC RESP - ', bncResp)
+
+      return ''
+    }
+
+    this.client.transfer = transfer
+
+    this.walletType = WalletOption.TRUSTWALLET
   }
 
   loadBalance = async (): Promise<AssetAmount[]> => {

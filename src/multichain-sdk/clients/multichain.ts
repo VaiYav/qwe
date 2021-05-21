@@ -25,6 +25,7 @@ import {
   NetworkType as MidgardNetwork,
   InboundAddressesItem,
 } from 'midgard-sdk'
+import { TrustWalletClient } from 'trustwallet-sdk'
 
 import { XdefiClient } from '../../xdefi-sdk/xdefi'
 import { Swap, Memo, Asset, AssetAmount } from '../entities'
@@ -78,6 +79,8 @@ export interface IMultiChain {
   connectKeystore(phrase: string): void
   validateKeystore(keystore: Keystore, password: string): Promise<boolean>
 
+  connectMetamask(): Promise<void>
+  connectTrustWallet(): Promise<void>
   connectXDefiWallet(): Promise<void>
   connectAllClientsToXDefi(): Promise<void>
 
@@ -126,6 +129,8 @@ export class MultiChain implements IMultiChain {
   private xdefiClient: XdefiClient | null = null
 
   private metamaskClient: MetaMaskClient | null = null
+
+  private trustwalletClient: TrustWalletClient | null = null
 
   private wallet: Wallet | null = null
 
@@ -209,6 +214,21 @@ export class MultiChain implements IMultiChain {
         },
       }
     }
+  }
+
+  connectTrustWallet = async () => {
+    this.trustwalletClient = new TrustWalletClient()
+
+    if (!this.trustwalletClient.connected) {
+      await this.trustwalletClient.connect()
+      await this.trustwalletClient.getAccounts()
+    }
+
+    if (!this.wallet) this.initWallets()
+
+    await this.bnb.connectTrustWallet(this.trustwalletClient)
+
+    this.resetWallets()
   }
 
   // patch client methods to use xdefi request and address

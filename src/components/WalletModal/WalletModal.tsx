@@ -18,6 +18,7 @@ import {
   FolderIcon,
   LedgerIcon,
   MetaMaskLogoIcon,
+  TrustWalletLogoIcon,
   XdefiLogoIcon,
 } from '../Icons'
 import { Overlay, Label } from '../UIElements'
@@ -32,6 +33,7 @@ enum WalletMode {
   'Create' = 'Create',
   'Phrase' = 'Phrase',
   'Ledger' = 'Ledger',
+  'TrustWallet' = 'TrustWallet',
   'MetaMask' = 'MetaMask',
   'XDefi' = 'XDefi',
   'Select' = 'Select',
@@ -44,6 +46,7 @@ const WalletModal = () => {
     unlockWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
     setIsConnectModalOpen,
     isConnectModalOpen,
     walletLoading,
@@ -95,6 +98,15 @@ const WalletModal = () => {
     }
   }, [xdefiInstalled, connectXdefiWallet, setIsConnectModalOpen])
 
+  const handleConnectTrustWallet = useCallback(async () => {
+    try {
+      await connectTrustWallet()
+    } catch (error) {
+      console.log(error)
+    }
+    setIsConnectModalOpen(false)
+  }, [connectTrustWallet, setIsConnectModalOpen])
+
   const renderMainPanel = useMemo(() => {
     return (
       <Styled.MainPanel>
@@ -125,6 +137,10 @@ const WalletModal = () => {
           <Label>Connect Keystore</Label>
           <FolderIcon />
         </Styled.ConnectOption>
+        <Styled.ConnectOption onClick={handleConnectTrustWallet}>
+          <Label>Connect TrustWallet</Label>
+          <TrustWalletLogoIcon />
+        </Styled.ConnectOption>
         <Styled.ConnectOption onClick={() => setWalletMode(WalletMode.Create)}>
           <Label>Create Keystore</Label>
           <PlusOutlined />
@@ -139,6 +155,7 @@ const WalletModal = () => {
     metamaskStatus,
     xdefiInstalled,
     handleConnectMetaMask,
+    handleConnectTrustWallet,
     handleConnectXDefi,
   ])
 
