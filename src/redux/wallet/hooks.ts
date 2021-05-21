@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { Keystore } from '@xchainjs/xchain-crypto'
+import { Chain, ETHChain } from '@xchainjs/xchain-util'
 import { SupportedChain } from 'multichain-sdk'
 
 import { RootState } from 'redux/store'
@@ -36,6 +37,15 @@ export const useWallet = () => {
     [dispatch],
   )
 
+  const connectLedger = useCallback(
+    async (chain: Chain) => {
+      await multichain.connectLedger({ chain })
+
+      dispatch(walletActions.getWalletByChain(chain as SupportedChain))
+    },
+    [dispatch],
+  )
+
   const connectXdefiWallet = useCallback(async () => {
     try {
       await multichain.connectXDefiWallet()
@@ -50,7 +60,7 @@ export const useWallet = () => {
     try {
       await multichain.connectMetamask()
 
-      dispatch(walletActions.getWalletByChain('ETH'))
+      dispatch(walletActions.getWalletByChain(ETHChain))
     } catch (error) {
       console.error(error)
     }
@@ -89,5 +99,6 @@ export const useWallet = () => {
     connectXdefiWallet,
     connectMetamask,
     connectTrustWallet,
+    connectLedger,
   }
 }

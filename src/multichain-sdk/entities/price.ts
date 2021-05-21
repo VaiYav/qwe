@@ -116,18 +116,20 @@ export class Price extends Amount {
     return new BigNumber(1).dividedBy(this.raw())
   }
 
-  toCurrencyFormat(
-    decimalPlaces = 8,
-    format: BigNumber.Format = BN_FORMAT,
-    rounding: Rounding = Rounding.ROUND_DOWN,
-  ): string {
-    const fixedLabel = this.toFixedRaw(decimalPlaces, format, rounding)
+  toCurrencyFormat(decimalPlaces = 8, abbreviate = true): string {
+    const fixedLabel = abbreviate
+      ? this.toAbbreviateRaw(decimalPlaces)
+      : this.toFixedRaw(decimalPlaces)
 
     const isUSDBased = !this.quoteAsset || this.quoteAsset.ticker === 'USD'
 
     return isUSDBased
-      ? `$${this.toFixedRaw(decimalPlaces, format, rounding)}`
+      ? `$${fixedLabel}`
       : `${fixedLabel} ${this.quoteAsset?.currencySymbol()}`
+  }
+
+  toAbbreviateRaw(decimalPlaces = 2): string {
+    return Amount.fromAssetAmount(this.price, 8).toAbbreviate(decimalPlaces)
   }
 
   toFixedRaw(

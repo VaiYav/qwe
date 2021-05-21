@@ -30,9 +30,9 @@ export const useBalance = () => {
 
   const getMaxBalance = useCallback(
     (asset: Asset): Amount => {
-      if (!wallet) {
+      if (!wallet?.[asset.chain as SupportedChain]) {
         // allow max amount for emulation if wallet is not connected
-        return Amount.fromAssetAmount(10 ** 3, 8)
+        return Amount.fromAssetAmount(10 ** 8, 8)
       }
 
       // calculate inbound fee

@@ -42,7 +42,7 @@ const StatisticsView: React.FC = (): JSX.Element => {
         title: 'Total Reserve',
         value: runeToCurrency(
           Amount.fromMidgard(networkData?.totalReserve),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Block Reward',
@@ -81,25 +81,25 @@ const StatisticsView: React.FC = (): JSX.Element => {
     return [
       {
         title: 'Total Volume',
-        value: runeToCurrency(totalVolume).toCurrencyFormat(0),
+        value: runeToCurrency(totalVolume).toCurrencyFormat(2),
       },
       {
         title: 'Swap Volume',
         value: runeToCurrency(
           Amount.fromMidgard(stats?.swapVolume),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
-        title: 'Add Liquidity Volume',
+        title: 'Deposit Volume',
         value: runeToCurrency(
           Amount.fromMidgard(stats?.addLiquidityVolume),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Withdraw Volume',
         value: runeToCurrency(
           Amount.fromMidgard(stats?.withdrawVolume),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
     ]
   }, [stats, totalVolume, runeToCurrency])
@@ -110,17 +110,21 @@ const StatisticsView: React.FC = (): JSX.Element => {
         title: 'Total Liquidity',
         value: runeToCurrency(
           Amount.fromMidgard(stats?.runeDepth).mul(2),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Total RUNE Pooled',
-        value: `${Amount.fromMidgard(networkData?.totalPooledRune).toFixed(
-          0,
-        )} RUNE`,
+        value: `${Amount.fromMidgard(
+          networkData?.totalPooledRune,
+        ).toAbbreviate()} RUNE`,
       },
       {
         title: 'Max RUNE Liquidity',
-        value: `${maxLiquidityRune?.toFixed(0) ?? 'N/A'} RUNE`,
+        value: `${maxLiquidityRune?.toAbbreviate() ?? 'N/A'} RUNE`,
+      },
+      {
+        title: 'Upgraded RUNE',
+        value: `${Amount.fromMidgard(stats?.switchedRune).toAbbreviate()} RUNE`,
       },
       {
         title: 'Liquidity APY',

@@ -3,12 +3,12 @@ import QRCodeModal from '@walletconnect/qrcode-modal'
 import { IConnector, IWalletConnectOptions } from '@walletconnect/types'
 
 import { networkByChain, supportedNetworks, errorCodes } from './constants'
-import { IAccount, SupportedChain } from './types'
+import { IAccount, TWSupportedChain } from './types'
 
 export class TrustWalletClient {
-  public connector: IConnector | undefined
+  connector: IConnector | undefined
 
-  public accounts: IAccount[] = []
+  accounts: IAccount[] = []
 
   private options: IWalletConnectOptions | undefined
 
@@ -24,7 +24,7 @@ export class TrustWalletClient {
     return false
   }
 
-  public connect = async (): Promise<IConnector> => {
+  connect = async (): Promise<IConnector> => {
     const options: IWalletConnectOptions = {
       bridge: 'https://bridge.walletconnect.org',
       qrcodeModal: QRCodeModal,
@@ -40,7 +40,7 @@ export class TrustWalletClient {
     return connector
   }
 
-  public getAccounts = async (): Promise<IAccount[]> => {
+  getAccounts = async (): Promise<IAccount[]> => {
     if (!this.connector) {
       throw new Error(errorCodes.ERROR_SESSION_DISCONNECTED)
     }
@@ -59,7 +59,7 @@ export class TrustWalletClient {
     return supportedAccounts
   }
 
-  public getAddressByChain = (chain: SupportedChain): string => {
+  getAddressByChain = (chain: TWSupportedChain): string => {
     const selectedAccount = this.accounts.find(
       (item) => item.network === networkByChain[chain],
     )
@@ -71,7 +71,7 @@ export class TrustWalletClient {
     return selectedAccount.address
   }
 
-  public trustSignTransaction = async (
+  trustSignTransaction = async (
     network: number,
     transaction: any,
   ): Promise<any> => {
@@ -91,7 +91,7 @@ export class TrustWalletClient {
     })
   }
 
-  public killSession = async (): Promise<void> => {
+  killSession = async (): Promise<void> => {
     if (this.connector) {
       await this.connector.killSession()
     }

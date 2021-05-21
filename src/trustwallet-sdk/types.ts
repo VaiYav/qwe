@@ -1,4 +1,4 @@
-export type SupportedChain = 'ETH' | 'BNB'
+export type TWSupportedChain = 'ETH' | 'BNB'
 
 export interface IAccount {
   network: number
