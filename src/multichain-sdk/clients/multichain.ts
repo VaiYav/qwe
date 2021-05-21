@@ -172,20 +172,34 @@ export class MultiChain implements IMultiChain {
     this.bch = new BchChain({ network })
   }
 
-  connectLedger = ({
+  connectLedger = async ({
     chain,
     addressIndex = 0,
   }: {
     chain: Chain
     addressIndex?: number
   }) => {
-    if (chain in LEDGER_SUPPORTED_CHAINS) {
+    if (!(chain in LEDGER_SUPPORTED_CHAINS)) {
       if (chain === BNBChain) {
-        this.bnb.connectLedger(addressIndex)
-      }
-    }
+        await this.bnb.connectLedger(addressIndex)
+        const ledgerAddress = this.bnb.getClient().getAddress().toLowerCase()
 
-    throw Error(`Ledger connect is not supprted for ${chain}`)
+        if (!this.wallet) this.initWallets()
+
+        if (this.wallet) {
+          this.wallet = {
+            ...this.wallet,
+            [ETHChain]: {
+              address: ledgerAddress,
+              balance: [],
+              walletType: WalletOption.LEDGER,
+            },
+          }
+        }
+      }
+    } else {
+      throw Error(`Ledger connect is not supprted for ${chain} chain`)
+    }
   }
 
   connectMetamask = async (): Promise<void> => {
@@ -660,15 +674,15 @@ export class MultiChain implements IMultiChain {
 
       const walletAddress = this.getWalletAddressByChain(swap.outputAsset.chain)
 
-      if (!walletAddress) {
-        return await Promise.reject(new Error('Wallet Address not detected'))
+      const recipientAddress = recipient || walletAddress
+
+      if (!recipientAddress) {
+        return await Promise.reject(new Error('Recipient address is not valid'))
       }
 
       if (swap.hasInSufficientFee) {
         return await Promise.reject(new Error('Insufficient Fee'))
       }
-
-      const recipientAddress = recipient || walletAddress
 
       const inboundData = await this.getInboundDataByChain(
         swap.inputAsset.chain,

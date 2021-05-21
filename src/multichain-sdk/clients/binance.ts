@@ -1,4 +1,3 @@
-import { ledger } from '@binance-chain/javascript-sdk'
 import {
   Client as BncClient,
   MultiTransfer,
@@ -14,6 +13,7 @@ import {
   Chain,
   BNBChain,
   assetToString,
+  baseToAsset,
 } from '@xchainjs/xchain-util'
 import { BinanceLedger } from 'wallet-core/ledger-sdk/binance'
 
@@ -32,7 +32,7 @@ export class BnbChain implements IBnbChain {
 
   private client: BncClient
 
-  private ledgerApp: BinanceLedger | null = null
+  private ledgerClient: BinanceLedger | null = null
 
   public readonly chain: Chain
 
@@ -68,13 +68,18 @@ export class BnbChain implements IBnbChain {
   disconnect = () => {
     this.client.purgeClient()
     this.walletType = null
-    this.ledgerApp = null
+    this.ledgerClient = null
   }
 
   connectLedger = async (addressIndex = 0) => {
-    this.ledgerApp = new BinanceLedger(addressIndex)
+    this.ledgerClient = new BinanceLedger(addressIndex)
 
-    await this.ledgerApp.connect()
+    const address = await this.ledgerClient.connect()
+
+    await this.client.getBncClient().initChain()
+
+    // patch getAddress method with ledger address
+    this.client.getAddress = () => address
 
     this.walletType = WalletOption.LEDGER
   }
@@ -181,28 +186,42 @@ export class BnbChain implements IBnbChain {
       const amount = baseAmount(assetAmount.amount.baseAmount, asset.decimal)
 
       // delegate signing to ledger app
-      if (this.walletType === WalletOption.LEDGER && this.ledgerApp) {
-        const { ledgerApp } = this
+      if (this.walletType === WalletOption.LEDGER) {
+        if (!this.ledgerClient) throw new Error('ledger not connected')
 
-        await new Promise((resolve, reject) => {
-          this.client.getBncClient().useLedgerSigningDelegate(
-            ledger,
-            () => {}, // ledger pre sign
-            resolve, // ledger verify success
-            () => {
-              // ledger verify failed
-              reject(Error('Ledger verify failed.'))
-            },
-            ledgerApp.derivationPath,
+        const { ledgerClient } = this
+        const ledgerApp = ledgerClient.getLedgerApp()
+
+        console.log('delegate signing to ledger')
+        this.client.getBncClient().useLedgerSigningDelegate(
+          ledgerApp,
+          () => {
+            // ledger pre sign
+            console.log('presign request')
+          },
+          () => {
+            // ledger verify success
+            console.log('ledger signing success')
+          },
+          () => {
+            // ledger verify failed
+          },
+          ledgerClient.derivationPath,
+        )
+
+        const transferResult = await this.client
+          .getBncClient()
+          .transfer(
+            this.client.getAddress(),
+            recipient,
+            baseToAsset(amount).amount().toString(),
+            asset.symbol,
+            memo,
           )
-        })
 
-        return await this.client.transfer({
-          asset: asset.getAssetObj(),
-          amount,
-          recipient,
-          memo,
-        })
+        return transferResult.result.map(
+          (txResult: { hash?: TxHash }) => txResult?.hash ?? '',
+        )[0]
       }
 
       return await this.client.transfer({

@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "start": "craco start",
+    "start-ssl": "HTTPS=true craco start",
     "build": "craco --max_old_space_size=4096 build",
     "build:dev": "yarn build && yarn release-storybook",
     "deploy": "yarn build && netlify deploy --prod",
