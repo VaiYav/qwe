@@ -249,7 +249,7 @@ export class Amount implements IAmount {
     return this.toFixedDecimal(decimalPlaces, format, rounding)
   }
 
-  toAbbreviate(decimalPlaces = 8): string {
+  toAbbreviate(decimalPlaces = 2): string {
     let newValue = this.assetAmount.toNumber()
     const suffixes = ['', 'K', 'M', 'B', 'T', 'Q', 'Q', 's']
     let suffixNum = 0

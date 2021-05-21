@@ -43,17 +43,17 @@ export const GlobalStats: React.FC = (): JSX.Element => {
         title: 'Total Liquidity',
         value: runeToCurrency(
           Amount.fromMidgard(stats?.runeDepth).mul(2),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Total Volume',
-        value: runeToCurrency(totalVolume).toCurrencyFormat(0),
+        value: runeToCurrency(totalVolume).toCurrencyFormat(2),
       },
       {
         title: '24H Volume',
         value: volume24h
           ? runeToCurrency(Amount.fromMidgard(volume24h || 0)).toCurrencyFormat(
-              0,
+              2,
             )
           : '-',
       },
