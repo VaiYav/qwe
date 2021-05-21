@@ -238,7 +238,6 @@ export class MultiChain implements IMultiChain {
 
     if (!this.trustwalletClient.connected) {
       await this.trustwalletClient.connect()
-      await this.trustwalletClient.getAccounts()
     }
 
     if (!this.wallet) this.initWallets()

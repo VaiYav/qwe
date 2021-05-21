@@ -5,16 +5,23 @@ import { IConnector, IWalletConnectOptions } from '@walletconnect/types'
 import { networkByChain, supportedNetworks, errorCodes } from './constants'
 import { IAccount, TWSupportedChain } from './types'
 
+const qrcodeModalOptions = {
+  mobileLinks: ['trust'],
+}
+
 export class WalletConnectClient {
   connector: IConnector | undefined
 
   accounts: IAccount[] = []
 
-  private options: IWalletConnectOptions | undefined
+  private options: IWalletConnectOptions
 
   constructor(options?: IWalletConnectOptions) {
     this.connector = undefined
-    this.options = options
+    this.options = {
+      qrcodeModalOptions,
+      ...options,
+    }
   }
 
   get connected() {
@@ -33,9 +40,35 @@ export class WalletConnectClient {
 
     // create new connector
     const connector = new WalletConnect(options)
+    connector.killSession()
 
-    await connector.connect()
+    // Check if connection is already established
+    if (!connector.connected) {
+      // create new session
+      await connector.createSession()
+
+      // display QR Code modal OR MobileLink for trustwallet
+      QRCodeModal.open(connector.uri, () => {}, qrcodeModalOptions)
+    }
+
     this.connector = connector
+
+    await new Promise((resolve, reject) => {
+      connector.on('connect', (error) => {
+        if (error) {
+          console.log('walletConnector connect error: ', error)
+          reject(error)
+        }
+
+        QRCodeModal.close()
+
+        // get accounts
+
+        this.getAccounts().then((res) => {
+          resolve(res)
+        })
+      })
+    })
 
     return connector
   }
