@@ -140,6 +140,10 @@ const WalletModal = () => {
   const renderMainPanel = useMemo(() => {
     return (
       <Styled.MainPanel>
+        <Styled.ConnectOption onClick={handleConnectTrustWallet}>
+          <Label>WalletConnect</Label>
+          <TrustWalletLogoIcon />
+        </Styled.ConnectOption>
         <Styled.ConnectOption onClick={handleConnectMetaMask}>
           {metamaskStatus === WalletStatus.MetaMaskDetected && (
             <Label>Connect MetaMask Wallet</Label>
@@ -166,10 +170,6 @@ const WalletModal = () => {
         >
           <Label>Connect Keystore</Label>
           <FolderIcon />
-        </Styled.ConnectOption>
-        <Styled.ConnectOption onClick={handleConnectTrustWallet}>
-          <Label>Connect TrustWallet</Label>
-          <TrustWalletLogoIcon />
         </Styled.ConnectOption>
         <Styled.ConnectOption onClick={() => setWalletMode(WalletMode.Create)}>
           <Label>Create Keystore</Label>
