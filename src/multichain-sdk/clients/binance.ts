@@ -15,7 +15,12 @@ import {
   assetToString,
   baseToAsset,
 } from '@xchainjs/xchain-util'
-import { BinanceLedger } from 'wallet-core/ledger-sdk/binance'
+import { BinanceLedger } from 'wallet-core/ledger/binance'
+import {
+  WalletConnectClient,
+  getSignRequestMsg,
+  BINANCE_NETWORK_ID,
+} from 'wallet-core/walletconnect'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
@@ -118,6 +123,59 @@ export class BnbChain implements IBnbChain {
     this.walletType = WalletOption.XDEFI
   }
 
+  connectTrustWallet = async (walletconnectClient: WalletConnectClient) => {
+    if (!walletconnectClient) throw Error('trustwallet client not found')
+
+    const address = walletconnectClient.getAddressByChain(BNBChain)
+
+    if (!address) throw Error('bnb address not found')
+
+    this.walletType = WalletOption.TRUSTWALLET
+
+    // patch getAddress method with walletconnect address
+    this.client.getAddress = () => address
+
+    const bncClient = this.client.getBncClient()
+
+    this.client.transfer = async (txParams: ClientTxParams) => {
+      const { asset, amount, recipient, memo = '' } = txParams
+
+      if (!asset) throw Error('invalid asset')
+
+      const account = await bncClient.getAccount(address)
+      if (!account) throw Error('invalid account')
+
+      const accountNumber = account.result.account_number.toString()
+      const sequence = account.result.sequence.toString()
+      const txParam = {
+        fromAddress: address,
+        toAddress: recipient,
+        denom: asset?.symbol,
+        amount: amount.amount().toNumber(),
+      }
+
+      // get tx signing msg
+      const signRequestMsg = getSignRequestMsg({
+        accountNumber,
+        sequence,
+        memo,
+        txParam,
+      })
+
+      // request tx signing to walletconnect
+      const signedTx = await walletconnectClient.signCustomTransaction({
+        network: BINANCE_NETWORK_ID,
+        tx: signRequestMsg,
+      })
+
+      // broadcast raw tx
+      const res = await bncClient.sendRawTransaction(signedTx, true)
+
+      // return tx hash
+      return res?.result[0]?.hash
+    }
+  }
+
   loadBalance = async (): Promise<AssetAmount[]> => {
     try {
       const balances: Balance[] = await this.client.getBalance()
@@ -192,7 +250,6 @@ export class BnbChain implements IBnbChain {
         const { ledgerClient } = this
         const ledgerApp = ledgerClient.getLedgerApp()
 
-        console.log('delegate signing to ledger')
         this.client.getBncClient().useLedgerSigningDelegate(
           ledgerApp,
           () => {

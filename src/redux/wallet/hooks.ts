@@ -47,23 +47,21 @@ export const useWallet = () => {
   )
 
   const connectXdefiWallet = useCallback(async () => {
-    try {
-      await multichain.connectXDefiWallet()
+    await multichain.connectXDefiWallet()
 
-      dispatch(walletActions.loadAllWallets())
-    } catch (error) {
-      console.error(error)
-    }
+    dispatch(walletActions.loadAllWallets())
   }, [dispatch])
 
   const connectMetamask = useCallback(async () => {
-    try {
-      await multichain.connectMetamask()
+    await multichain.connectMetamask()
 
-      dispatch(walletActions.getWalletByChain(ETHChain))
-    } catch (error) {
-      console.error(error)
-    }
+    dispatch(walletActions.getWalletByChain(ETHChain))
+  }, [dispatch])
+
+  const connectTrustWallet = useCallback(async () => {
+    await multichain.connectTrustWallet()
+
+    dispatch(walletActions.getWalletByChain('BNB'))
   }, [dispatch])
 
   const setIsConnectModalOpen = useCallback(
@@ -88,6 +86,7 @@ export const useWallet = () => {
     disconnectWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
     connectLedger,
   }
 }

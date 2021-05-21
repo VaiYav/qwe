@@ -19,6 +19,7 @@ import {
   FolderIcon,
   LedgerIcon,
   MetaMaskLogoIcon,
+  TrustWalletLogoIcon,
   XdefiLogoIcon,
 } from '../Icons'
 import { Overlay, Label, Notification } from '../UIElements'
@@ -33,6 +34,7 @@ enum WalletMode {
   'Create' = 'Create',
   'Phrase' = 'Phrase',
   'Ledger' = 'Ledger',
+  'TrustWallet' = 'TrustWallet',
   'MetaMask' = 'MetaMask',
   'XDefi' = 'XDefi',
   'Select' = 'Select',
@@ -45,6 +47,7 @@ const WalletModal = () => {
     unlockWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
     connectLedger,
     setIsConnectModalOpen,
     isConnectModalOpen,
@@ -112,11 +115,27 @@ const WalletModal = () => {
       try {
         await connectXdefiWallet()
       } catch (error) {
-        console.log(error)
+        Notification({
+          type: 'error',
+          message: 'Connect XDEFI Wallet Failed',
+        })
       }
       setIsConnectModalOpen(false)
     }
   }, [xdefiInstalled, connectXdefiWallet, setIsConnectModalOpen])
+
+  const handleConnectTrustWallet = useCallback(async () => {
+    try {
+      await connectTrustWallet()
+    } catch (error) {
+      Notification({
+        type: 'error',
+        message: 'Connect TrustWallet Failed',
+      })
+      console.log(error)
+    }
+    setIsConnectModalOpen(false)
+  }, [connectTrustWallet, setIsConnectModalOpen])
 
   const renderMainPanel = useMemo(() => {
     return (
@@ -148,6 +167,10 @@ const WalletModal = () => {
           <Label>Connect Keystore</Label>
           <FolderIcon />
         </Styled.ConnectOption>
+        <Styled.ConnectOption onClick={handleConnectTrustWallet}>
+          <Label>Connect TrustWallet</Label>
+          <TrustWalletLogoIcon />
+        </Styled.ConnectOption>
         <Styled.ConnectOption onClick={() => setWalletMode(WalletMode.Create)}>
           <Label>Create Keystore</Label>
           <PlusOutlined />
@@ -162,6 +185,7 @@ const WalletModal = () => {
     metamaskStatus,
     xdefiInstalled,
     handleConnectMetaMask,
+    handleConnectTrustWallet,
     handleConnectXDefi,
   ])
 

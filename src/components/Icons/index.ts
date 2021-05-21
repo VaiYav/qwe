@@ -13,6 +13,7 @@ import { ReactComponent as MetaMaskLogoIcon } from 'assets/SVG/metamask-logo.svg
 import { ReactComponent as TelegramIcon } from 'assets/SVG/telegram.svg'
 import { ReactComponent as ThorswapBlackIcon } from 'assets/SVG/thorswap-logo-black.svg'
 import { ReactComponent as ThorswapWhiteIcon } from 'assets/SVG/thorswap-logo-white2.svg'
+import { ReactComponent as TrustWalletLogoIcon } from 'assets/SVG/trustwallet-logo.svg'
 import { ReactComponent as XdefiLogoIcon } from 'assets/SVG/xdefi-logo.svg'
 
 export {
@@ -29,6 +30,7 @@ export {
   DiscordIcon,
   LedgerIcon,
   MetaMaskLogoIcon,
+  TrustWalletLogoIcon,
   XdefiLogoIcon,
 }
 
