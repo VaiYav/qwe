@@ -4,6 +4,7 @@ import { IConnector, IWalletConnectOptions } from '@walletconnect/types'
 
 import { networkByChain, supportedNetworks, errorCodes } from './constants'
 import { IAccount, TWSupportedChain } from './types'
+import { removeCache } from './utils'
 
 const qrcodeModalOptions = {
   mobileLinks: ['trust'],
@@ -38,9 +39,10 @@ export class WalletConnectClient {
       ...this.options,
     }
 
+    removeCache()
+
     // create new connector
     const connector = new WalletConnect(options)
-    connector.killSession()
 
     // Check if connection is already established
     if (!connector.connected) {
@@ -131,5 +133,21 @@ export class WalletConnectClient {
         },
       ],
     })
+  }
+
+  transferERC20 = (txParams: any) => {
+    if (!this.connector) {
+      throw new Error(errorCodes.ERROR_SESSION_DISCONNECTED)
+    }
+
+    return this.connector.sendTransaction(txParams)
+  }
+
+  signTransactionERC20 = (txParams: any) => {
+    if (!this.connector) {
+      throw new Error(errorCodes.ERROR_SESSION_DISCONNECTED)
+    }
+
+    return this.connector.signTransaction(txParams)
   }
 }
