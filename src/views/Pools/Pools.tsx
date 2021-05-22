@@ -154,7 +154,7 @@ const Home = () => {
         render: (pool: Pool) =>
           runeToCurrency(
             Amount.fromMidgard(pool.detail.runeDepth).mul(2),
-          ).toCurrencyFormat(0),
+          ).toCurrencyFormat(2),
         align: rightAlign,
         sortDirections: ['descend', 'ascend'],
         defaultSortOrder: 'descend',
@@ -171,7 +171,7 @@ const Home = () => {
         render: (pool: Pool) =>
           runeToCurrency(
             Amount.fromMidgard(pool.detail.volume24h),
-          ).toCurrencyFormat(0),
+          ).toCurrencyFormat(2),
         align: rightAlign,
         sortDirections: ['descend', 'ascend'],
         sorter: (a: Pool, b: Pool) =>

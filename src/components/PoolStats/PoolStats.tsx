@@ -50,13 +50,13 @@ export const PoolStats = ({ pool }: PoolStatsProps): JSX.Element => {
         title: 'Liquidity',
         value: runeToCurrency(
           Amount.fromMidgard(pool?.detail?.runeDepth).mul(2),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Volume 24H',
         value: runeToCurrency(
           Amount.fromMidgard(pool?.detail?.volume24h),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'APY',
@@ -66,7 +66,7 @@ export const PoolStats = ({ pool }: PoolStatsProps): JSX.Element => {
         title: 'IL Paid',
         value: runeToCurrency(
           Amount.fromMidgard(poolStats?.impermanentLossProtectionPaid),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Total Tx',
@@ -76,7 +76,7 @@ export const PoolStats = ({ pool }: PoolStatsProps): JSX.Element => {
         title: 'Total Fees',
         value: runeToCurrency(
           Amount.fromMidgard(poolStats?.totalFees),
-        ).toCurrencyFormat(0),
+        ).toCurrencyFormat(2),
       },
       {
         title: 'Members',
