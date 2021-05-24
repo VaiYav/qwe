@@ -25,7 +25,10 @@ import {
   NetworkType as MidgardNetwork,
   InboundAddressesItem,
 } from 'midgard-sdk'
-import { WalletConnectClient } from 'wallet-core/walletconnect'
+import {
+  WalletConnectClient,
+  WalletConnectOption,
+} from 'wallet-core/walletconnect'
 
 import { XdefiClient } from '../../xdefi-sdk/xdefi'
 import { Swap, Memo, Asset, AssetAmount } from '../entities'
@@ -81,7 +84,7 @@ export interface IMultiChain {
   validateKeystore(keystore: Keystore, password: string): Promise<boolean>
 
   connectMetamask(): Promise<void>
-  connectTrustWallet(): Promise<void>
+  connectTrustWallet(options?: WalletConnectOption): Promise<void>
   connectXDefiWallet(): Promise<void>
   connectAllClientsToXDefi(): Promise<void>
 
@@ -233,8 +236,8 @@ export class MultiChain implements IMultiChain {
     }
   }
 
-  connectTrustWallet = async () => {
-    this.trustwalletClient = new WalletConnectClient()
+  connectTrustWallet = async (options?: WalletConnectOption) => {
+    this.trustwalletClient = new WalletConnectClient(options)
 
     if (!this.trustwalletClient.connected) {
       await this.trustwalletClient.connect()
@@ -332,6 +335,11 @@ export class MultiChain implements IMultiChain {
   resetClients = () => {
     this.phrase = ''
     this.wallet = null
+
+    // kill TrustWallet session if TW client is valid
+    if (this.trustwalletClient) {
+      this.trustwalletClient.killSession()
+    }
 
     // reset all clients
     this.thor = new ThorChain({ network: this.network })

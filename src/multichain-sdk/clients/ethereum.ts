@@ -7,7 +7,6 @@ import {
   Client as EthClient,
   ETHAddress,
   getTokenAddress,
-  ApproveParams as ClientApproveParams,
   estimateDefaultFeesWithGasPricesAndLimits,
   TxOverrides,
 } from '@xchainjs/xchain-ethereum'
@@ -435,50 +434,6 @@ export class EthChain implements IEthChain {
     }
 
     this.client.getWallet = () => ethWallet
-
-    this.client.approve = async (approveParams: ClientApproveParams) => {
-      const { spender, sender, amount, feeOptionKey } = approveParams
-
-      const gasPrice =
-        feeOptionKey &&
-        BN.from(
-          (
-            await this.client
-              .estimateGasPrices()
-              .then((prices) => prices[feeOptionKey])
-              .catch(() => {
-                const {
-                  gasPrices,
-                } = estimateDefaultFeesWithGasPricesAndLimits()
-                return gasPrices[feeOptionKey]
-              })
-          )
-            .amount()
-            .toFixed(),
-        )
-      const gasLimit = await this.client
-        .estimateApprove({ spender, sender, amount })
-        .catch(() => undefined)
-
-      const txAmount = amount
-        ? BN.from(amount.amount().toFixed())
-        : BN.from(2).pow(256).sub(1)
-      const contract = new ethers.Contract(sender, erc20ABI)
-      const unsignedTx = await contract.populateTransaction.approve(
-        spender,
-        txAmount.toHexString(),
-        {
-          from: address,
-          gasPrice,
-          gasLimit,
-        },
-      )
-      unsignedTx.from = address
-
-      const txHash = await walletconnectClient.transferERC20(unsignedTx)
-
-      return txHash
-    }
 
     this.client.transfer = async ({
       asset,

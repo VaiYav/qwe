@@ -37,6 +37,12 @@ export const useWallet = () => {
     [dispatch],
   )
 
+  const disconnectWallet = useCallback(() => {
+    multichain.resetClients()
+
+    dispatch(actions.disconnect())
+  }, [dispatch])
+
   const connectLedger = useCallback(
     async (chain: Chain) => {
       await multichain.connectLedger({ chain })
@@ -59,11 +65,15 @@ export const useWallet = () => {
   }, [dispatch])
 
   const connectTrustWallet = useCallback(async () => {
-    await multichain.connectTrustWallet()
+    await multichain.connectTrustWallet({
+      listeners: {
+        disconnect: disconnectWallet,
+      },
+    })
 
     dispatch(walletActions.getWalletByChain('BNB'))
     dispatch(walletActions.getWalletByChain('ETH'))
-  }, [dispatch])
+  }, [dispatch, disconnectWallet])
 
   const setIsConnectModalOpen = useCallback(
     (visible: boolean) => {
@@ -71,12 +81,6 @@ export const useWallet = () => {
     },
     [dispatch],
   )
-
-  const disconnectWallet = useCallback(() => {
-    multichain.resetClients()
-
-    dispatch(actions.disconnect())
-  }, [dispatch])
 
   return {
     ...walletState,
