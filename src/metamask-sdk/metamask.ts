@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { hexlify } from '@ethersproject/bytes'
+
 import { Network, WalletStatus } from './types'
 
 export interface IMetaMaskClient {
@@ -76,9 +78,15 @@ export class MetaMaskClient implements IMetaMaskClient {
   transferERC20 = (txParams: any) => {
     console.log('tx transfer params', txParams)
 
+    const erc20TxParam = {
+      ...txParams,
+      gasPrice: hexlify(txParams?.gasPrice || 0),
+      gasLimit: hexlify(txParams?.gasLimit || 0),
+    }
+
     return this.provider.request({
       method: 'eth_sendTransaction',
-      params: [txParams],
+      params: [erc20TxParam],
     })
   }
 
@@ -90,9 +98,15 @@ export class MetaMaskClient implements IMetaMaskClient {
   signTransactionERC20 = (txParams: any) => {
     console.log('tx sign params', txParams)
 
+    const erc20TxParam = {
+      ...txParams,
+      gasPrice: hexlify(txParams?.gasPrice || 0),
+      gasLimit: hexlify(txParams?.gasLimit || 0),
+    }
+
     return this.provider.request({
       method: 'eth_signTransaction',
-      params: [txParams],
+      params: [erc20TxParam],
     })
   }
 }
