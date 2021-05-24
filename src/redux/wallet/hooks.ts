@@ -62,6 +62,7 @@ export const useWallet = () => {
     await multichain.connectTrustWallet()
 
     dispatch(walletActions.getWalletByChain('BNB'))
+    dispatch(walletActions.getWalletByChain('ETH'))
   }, [dispatch])
 
   const setIsConnectModalOpen = useCallback(

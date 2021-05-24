@@ -243,7 +243,10 @@ export class MultiChain implements IMultiChain {
     if (!this.wallet) this.initWallets()
 
     await this.bnb.connectTrustWallet(this.trustwalletClient)
+    await this.eth.connectTrustWallet(this.trustwalletClient)
+
     const bnbAddress = this.bnb.getClient().getAddress().toLowerCase()
+    const ethAddress = this.eth.getClient().getAddress().toLowerCase()
 
     if (!this.wallet) this.initWallets()
 
@@ -252,6 +255,11 @@ export class MultiChain implements IMultiChain {
         ...this.wallet,
         [BNBChain]: {
           address: bnbAddress,
+          balance: [],
+          walletType: WalletOption.TRUSTWALLET,
+        },
+        [ETHChain]: {
+          address: ethAddress,
           balance: [],
           walletType: WalletOption.TRUSTWALLET,
         },

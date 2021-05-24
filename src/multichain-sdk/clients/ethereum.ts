@@ -1,6 +1,7 @@
 import { BigNumber as BN } from '@ethersproject/bignumber'
 import { hexlify } from '@ethersproject/bytes'
 import { toUtf8Bytes } from '@ethersproject/strings'
+import WalletConnectProvider from '@walletconnect/web3-provider'
 import { TxHash, Balance, Network } from '@xchainjs/xchain-client'
 import {
   Client as EthClient,
@@ -21,6 +22,7 @@ import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { parseUnits } from 'ethers/lib/utils'
 import { MetaMaskClient } from 'metamask-sdk'
+import { WalletConnectClient } from 'wallet-core/walletconnect'
 
 import { ETH_DECIMAL } from 'multichain-sdk/constants'
 
@@ -47,12 +49,24 @@ export const SIMPLE_GAS_COST: ethers.BigNumber = BN.from(SIMPLE_GAS_COST_VALUE)
 export const BASE_TOKEN_GAS_COST: ethers.BigNumber = BN.from(
   BASE_TOKEN_GAS_COST_VALUE,
 )
+const MOCK_PHRASE =
+  'image rally need wedding health address purse army antenna leopard sea gain'
 
 export interface IEthChain extends IClient {
   getClient(): EthClient
   getERC20AssetDecimal(asset: Asset): Promise<number>
   isApproved({ spender, sender }: ApproveParams): Promise<boolean>
   approve({ spender, sender }: ApproveParams): Promise<TxHash>
+}
+
+export const getETHClient = (network: Network, phrase?: string) => {
+  return new EthClient({
+    network,
+    phrase,
+    etherscanApiKey: ETHERSCAN_API_KEY,
+    ethplorerApiKey: ETHPLORER_API_KEY,
+    infuraCreds: { projectId: INFURA_PROJECT_ID },
+  })
 }
 
 export class EthChain implements IEthChain {
@@ -66,14 +80,7 @@ export class EthChain implements IEthChain {
 
   constructor({ network = 'testnet' }: { network?: Network }) {
     this.chain = ETHChain
-
-    this.client = new EthClient({
-      network,
-      etherscanApiKey: ETHERSCAN_API_KEY,
-      ethplorerApiKey: ETHPLORER_API_KEY,
-      infuraCreds: { projectId: INFURA_PROJECT_ID },
-    })
-
+    this.client = getETHClient(network)
     this.walletType = null
   }
 
@@ -89,13 +96,8 @@ export class EthChain implements IEthChain {
   }
 
   connectKeystore = (phrase: string) => {
-    this.client = new EthClient({
-      network: this.client.getNetwork(),
-      phrase,
-      etherscanApiKey: ETHERSCAN_API_KEY,
-      ethplorerApiKey: ETHPLORER_API_KEY,
-      infuraCreds: { projectId: INFURA_PROJECT_ID },
-    })
+    const network = this.client.getNetwork()
+    this.client = getETHClient(network, phrase)
     this.walletType = WalletOption.KEYSTORE
   }
 
@@ -117,16 +119,8 @@ export class EthChain implements IEthChain {
      */
     metamaskClient.loadProvider()
 
-    const mockPhrase =
-      'image rally need wedding health address purse army antenna leopard sea gain'
     const network = this.client.getNetwork()
-    this.client = new EthClient({
-      network,
-      phrase: mockPhrase,
-      etherscanApiKey: ETHERSCAN_API_KEY,
-      ethplorerApiKey: ETHPLORER_API_KEY,
-      infuraCreds: { projectId: INFURA_PROJECT_ID },
-    })
+    this.client = getETHClient(network, MOCK_PHRASE)
 
     const address = await metamaskClient.getAddress()
 
@@ -318,16 +312,8 @@ export class EthChain implements IEthChain {
      */
     xdefiClient.loadProvider(ETHChain)
 
-    const mockPhrase =
-      'image rally need wedding health address purse army antenna leopard sea gain'
     const network = this.client.getNetwork()
-    this.client = new EthClient({
-      network,
-      phrase: mockPhrase,
-      etherscanApiKey: ETHERSCAN_API_KEY,
-      ethplorerApiKey: ETHPLORER_API_KEY,
-      infuraCreds: { projectId: INFURA_PROJECT_ID },
-    })
+    this.client = getETHClient(network, MOCK_PHRASE)
 
     const address = await xdefiClient.getAddress(ETHChain)
     this.client.getAddress = () => address
@@ -503,6 +489,198 @@ export class EthChain implements IEthChain {
     }
 
     this.walletType = WalletOption.XDEFI
+  }
+
+  connectTrustWallet = async (walletconnectClient: WalletConnectClient) => {
+    if (!walletconnectClient) throw Error('trustwallet client not found')
+
+    const address = walletconnectClient.getAddressByChain(ETHChain)
+
+    if (!address) throw Error('eth address not found')
+
+    const network = this.client.getNetwork()
+    this.client = getETHClient(network, MOCK_PHRASE)
+
+    // patch getAddress method with walletconnect address
+    this.client.getAddress = () => address
+
+    const ethWallet = this.client.getWallet()
+    ethWallet.getAddress = async () => address
+    ethWallet.sendTransaction = (unsignedTx) => {
+      const txParam = unsignedTx
+      txParam.value = hexlify(BN.from(unsignedTx.value || 0))
+
+      return walletconnectClient
+        .transferERC20(txParam)
+        .then(({ result }) => result)
+    }
+
+    ethWallet.signTransaction = (unsignedTx) => {
+      const txParam = unsignedTx
+      txParam.value = hexlify(BN.from(txParam.value || 0))
+
+      return walletconnectClient
+        .signTransactionERC20(txParam)
+        .then(({ result }) => result)
+    }
+
+    this.client.getWallet = () => ethWallet
+
+    this.client.approve = async (approveParams: ClientApproveParams) => {
+      const { spender, sender, amount, feeOptionKey } = approveParams
+
+      const gasPrice =
+        feeOptionKey &&
+        BN.from(
+          (
+            await this.client
+              .estimateGasPrices()
+              .then((prices) => prices[feeOptionKey])
+              .catch(() => {
+                const {
+                  gasPrices,
+                } = estimateDefaultFeesWithGasPricesAndLimits()
+                return gasPrices[feeOptionKey]
+              })
+          )
+            .amount()
+            .toFixed(),
+        )
+      const gasLimit = await this.client
+        .estimateApprove({ spender, sender, amount })
+        .catch(() => undefined)
+
+      const txAmount = amount
+        ? BN.from(amount.amount().toFixed())
+        : BN.from(2).pow(256).sub(1)
+      const contract = new ethers.Contract(sender, erc20ABI)
+      const unsignedTx = await contract.populateTransaction.approve(
+        spender,
+        txAmount.toHexString(),
+        {
+          from: address,
+          gasPrice,
+          gasLimit,
+        },
+      )
+      unsignedTx.from = address
+
+      const txHash = await walletconnectClient.transferERC20(unsignedTx)
+
+      return txHash
+    }
+
+    this.client.transfer = async ({
+      asset,
+      memo,
+      amount,
+      recipient,
+      feeOptionKey,
+      gasPrice,
+      gasLimit,
+    }) => {
+      try {
+        const txAmount = BN.from(amount.amount().toFixed())
+
+        let assetAddress
+        if (asset && assetToString(asset) !== assetToString(AssetETH)) {
+          assetAddress = getTokenAddress(asset)
+        }
+
+        const isETHAddress = assetAddress === ETHAddress
+
+        // feeOptionKey
+        const defaultGasLimit: ethers.BigNumber = isETHAddress
+          ? SIMPLE_GAS_COST
+          : BASE_TOKEN_GAS_COST
+
+        let overrides: TxOverrides = {
+          gasLimit: gasLimit || defaultGasLimit,
+          gasPrice: gasPrice && BN.from(gasPrice.amount().toFixed()),
+        }
+
+        // override `overrides` if `feeOptionKey` is provided
+        if (feeOptionKey) {
+          const gasPriceValue = await this.client
+            .estimateGasPrices()
+            .then((prices) => prices[feeOptionKey])
+            .catch(
+              () =>
+                estimateDefaultFeesWithGasPricesAndLimits().gasPrices[
+                  feeOptionKey
+                ],
+            )
+          const gasLimitValue = await this.client
+            .estimateGasLimit({ asset, recipient, amount, memo })
+            .catch(() => defaultGasLimit)
+
+          overrides = {
+            gasLimit: gasLimitValue,
+            gasPrice: BN.from(gasPriceValue.amount().toFixed()),
+          }
+        }
+
+        let txResult
+        if (assetAddress && !isETHAddress) {
+          // Transfer ERC20
+          const contract = new ethers.Contract(assetAddress, erc20ABI)
+          const unsignedTx = await contract.populateTransaction.transfer(
+            recipient,
+            txAmount.toHexString(),
+            { ...overrides },
+          )
+          unsignedTx.from = address
+
+          txResult = await walletconnectClient.transferERC20(unsignedTx)
+        } else {
+          // Transfer ETH
+          const transactionRequest = {
+            from: address,
+            to: recipient,
+            value: txAmount.toHexString(),
+            ...overrides,
+            data: memo ? toUtf8Bytes(memo) : undefined,
+          }
+          txResult = await walletconnectClient.transferERC20(transactionRequest)
+        }
+
+        return txResult.hash || txResult
+      } catch (error) {
+        return Promise.reject(error)
+      }
+    }
+
+    this.client.call = async (
+      routerAddress: string,
+      abi: ethers.ContractInterface,
+      func: string,
+      params: Array<any>,
+    ) => {
+      try {
+        if (!routerAddress) {
+          return await Promise.reject(new Error('address must be provided'))
+        }
+        const walletconnectProvider = new WalletConnectProvider({
+          infuraId: INFURA_PROJECT_ID,
+        })
+        await walletconnectProvider.enable()
+        const provider = new ethers.providers.Web3Provider(
+          walletconnectProvider,
+        )
+        const signer = provider.getSigner()
+
+        const contract = new ethers.Contract(
+          routerAddress,
+          abi,
+          provider,
+        ).connect(signer)
+        return contract[func](...params)
+      } catch (error) {
+        return Promise.reject(error)
+      }
+    }
+
+    this.walletType = WalletOption.TRUSTWALLET
   }
 
   loadBalance = async (): Promise<AssetAmount[]> => {
