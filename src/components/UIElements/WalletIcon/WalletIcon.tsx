@@ -6,6 +6,7 @@ import {
   MetaMaskLogoIcon,
   LedgerIcon,
   FolderIcon,
+  TrustWalletLogoIcon,
   XdefiLogoIcon,
 } from 'components/Icons'
 
@@ -23,6 +24,7 @@ export const WalletIcon: React.FC<WalletIconProps> = (props): JSX.Element => {
     if (walletType === WalletOption.METAMASK) return <MetaMaskLogoIcon />
     if (walletType === WalletOption.LEDGER) return <LedgerIcon />
     if (walletType === WalletOption.KEYSTORE) return <FolderIcon />
+    if (walletType === WalletOption.TRUSTWALLET) return <TrustWalletLogoIcon />
     if (walletType === WalletOption.XDEFI) return <XdefiLogoIcon />
 
     return <></>

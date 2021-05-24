@@ -37,6 +37,12 @@ export const useWallet = () => {
     [dispatch],
   )
 
+  const disconnectWallet = useCallback(() => {
+    multichain.resetClients()
+
+    dispatch(actions.disconnect())
+  }, [dispatch])
+
   const connectLedger = useCallback(
     async (chain: Chain) => {
       await multichain.connectLedger({ chain })
@@ -47,24 +53,27 @@ export const useWallet = () => {
   )
 
   const connectXdefiWallet = useCallback(async () => {
-    try {
-      await multichain.connectXDefiWallet()
+    await multichain.connectXDefiWallet()
 
-      dispatch(walletActions.loadAllWallets())
-    } catch (error) {
-      console.error(error)
-    }
+    dispatch(walletActions.loadAllWallets())
   }, [dispatch])
 
   const connectMetamask = useCallback(async () => {
-    try {
-      await multichain.connectMetamask()
+    await multichain.connectMetamask()
 
-      dispatch(walletActions.getWalletByChain(ETHChain))
-    } catch (error) {
-      console.error(error)
-    }
+    dispatch(walletActions.getWalletByChain(ETHChain))
   }, [dispatch])
+
+  const connectTrustWallet = useCallback(async () => {
+    await multichain.connectTrustWallet({
+      listeners: {
+        disconnect: disconnectWallet,
+      },
+    })
+
+    dispatch(walletActions.getWalletByChain('BNB'))
+    dispatch(walletActions.getWalletByChain('ETH'))
+  }, [dispatch, disconnectWallet])
 
   const setIsConnectModalOpen = useCallback(
     (visible: boolean) => {
@@ -72,12 +81,6 @@ export const useWallet = () => {
     },
     [dispatch],
   )
-
-  const disconnectWallet = useCallback(() => {
-    multichain.resetClients()
-
-    dispatch(actions.disconnect())
-  }, [dispatch])
 
   return {
     ...walletState,
@@ -88,6 +91,7 @@ export const useWallet = () => {
     disconnectWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
     connectLedger,
   }
 }

@@ -3,6 +3,10 @@ import { palette } from 'styled-theme'
 
 import { Input } from '../UIElements'
 
+type StatusIconProp = {
+  isValid: boolean
+}
+
 export const CardWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -49,7 +53,7 @@ export const AddressInput = styled(Input)<{ isError?: boolean }>`
 
   &.ant-input {
     color: ${({ isError = false }) =>
-      isError ? palette('error', 0) : palette('text', 0)};
+      isError ? palette('error', 0) : palette('primary', 0)};
     border: none;
     padding: 0;
     &:focus {
@@ -61,7 +65,7 @@ export const AddressInput = styled(Input)<{ isError?: boolean }>`
   &.ant-input.ant-input-disabled {
     background-color: ${palette('background', 1)};
     color: ${({ isError = false }) =>
-      isError ? palette('error', 0) : palette('text', 0)};
+      isError ? palette('error', 0) : palette('primary', 0)};
   }
 `
 
@@ -100,4 +104,11 @@ export const ToolWrapper = styled.div`
     width: 14px;
     height: 14px;
   }
+`
+
+export const IconWrapper = styled.div<StatusIconProp>`
+  display: flex;
+  align-items: center;
+  color: ${(props) =>
+    props.isValid ? palette('primary', 0) : palette('error', 0)};
 `

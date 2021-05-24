@@ -1,6 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
 
-import { ExternalLink } from 'react-feather'
+import {
+  ExternalLink,
+  Check as ValidIcon,
+  XOctagon as InvalidIcon,
+} from 'react-feather'
 
 import { CopyOutlined, EditOutlined, LockOutlined } from '@ant-design/icons'
 import { Chain } from '@xchainjs/xchain-util'
@@ -12,15 +16,9 @@ import { useWallet } from 'redux/wallet/hooks'
 
 import { multichain } from 'services/multichain'
 
-import { truncateAddress } from 'helpers/string'
+import { truncateAddress, AddressTruncMode } from 'helpers/string'
 
-import {
-  CoreButton,
-  Notification,
-  Label,
-  Tooltip,
-  WalletIcon,
-} from '../UIElements'
+import { CoreButton, Notification, Tooltip, WalletIcon } from '../UIElements'
 import * as Styled from './AddressSelectCard.style'
 
 export type Props = {
@@ -47,7 +45,7 @@ export const AddressSelectCard: React.FC<Props> = (
   const { wallet } = useWallet()
   const [isEditable, setEditable] = useState(false)
   const truncatedAddr = useMemo(
-    () => (address ? truncateAddress(address) : ''),
+    () => (address ? truncateAddress(address, AddressTruncMode.Long) : ''),
     [address],
   )
   const accountUrl = useMemo(
@@ -93,7 +91,11 @@ export const AddressSelectCard: React.FC<Props> = (
       )
     }
 
-    return <Label>(Edited)</Label>
+    return (
+      <Styled.IconWrapper isValid={isValidAddress}>
+        {isValidAddress ? <ValidIcon size={16} /> : <InvalidIcon size={16} />}
+      </Styled.IconWrapper>
+    )
   }
 
   return (

@@ -19,6 +19,7 @@ import {
   FolderIcon,
   LedgerIcon,
   MetaMaskLogoIcon,
+  TrustWalletLogoIcon,
   XdefiLogoIcon,
 } from '../Icons'
 import { Overlay, Label, Notification } from '../UIElements'
@@ -33,6 +34,7 @@ enum WalletMode {
   'Create' = 'Create',
   'Phrase' = 'Phrase',
   'Ledger' = 'Ledger',
+  'TrustWallet' = 'TrustWallet',
   'MetaMask' = 'MetaMask',
   'XDefi' = 'XDefi',
   'Select' = 'Select',
@@ -45,6 +47,7 @@ const WalletModal = () => {
     unlockWallet,
     connectXdefiWallet,
     connectMetamask,
+    connectTrustWallet,
     connectLedger,
     setIsConnectModalOpen,
     isConnectModalOpen,
@@ -112,15 +115,35 @@ const WalletModal = () => {
       try {
         await connectXdefiWallet()
       } catch (error) {
-        console.log(error)
+        Notification({
+          type: 'error',
+          message: 'Connect XDEFI Wallet Failed',
+        })
       }
       setIsConnectModalOpen(false)
     }
   }, [xdefiInstalled, connectXdefiWallet, setIsConnectModalOpen])
 
+  const handleConnectTrustWallet = useCallback(async () => {
+    try {
+      await connectTrustWallet()
+    } catch (error) {
+      Notification({
+        type: 'error',
+        message: 'Connect TrustWallet Failed',
+      })
+      console.log(error)
+    }
+    setIsConnectModalOpen(false)
+  }, [connectTrustWallet, setIsConnectModalOpen])
+
   const renderMainPanel = useMemo(() => {
     return (
       <Styled.MainPanel>
+        <Styled.ConnectOption onClick={handleConnectTrustWallet}>
+          <Label>WalletConnect</Label>
+          <TrustWalletLogoIcon />
+        </Styled.ConnectOption>
         <Styled.ConnectOption onClick={handleConnectMetaMask}>
           {metamaskStatus === WalletStatus.MetaMaskDetected && (
             <Label>Connect MetaMask Wallet</Label>
@@ -162,6 +185,7 @@ const WalletModal = () => {
     metamaskStatus,
     xdefiInstalled,
     handleConnectMetaMask,
+    handleConnectTrustWallet,
     handleConnectXDefi,
   ])
 

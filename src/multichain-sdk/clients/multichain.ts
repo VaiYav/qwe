@@ -25,6 +25,10 @@ import {
   NetworkType as MidgardNetwork,
   InboundAddressesItem,
 } from 'midgard-sdk'
+import {
+  WalletConnectClient,
+  WalletConnectOption,
+} from 'wallet-core/walletconnect'
 
 import { XdefiClient } from '../../xdefi-sdk/xdefi'
 import { Swap, Memo, Asset, AssetAmount } from '../entities'
@@ -79,6 +83,8 @@ export interface IMultiChain {
   connectKeystore(phrase: string): void
   validateKeystore(keystore: Keystore, password: string): Promise<boolean>
 
+  connectMetamask(): Promise<void>
+  connectTrustWallet(options?: WalletConnectOption): Promise<void>
   connectXDefiWallet(): Promise<void>
   connectAllClientsToXDefi(): Promise<void>
 
@@ -127,6 +133,8 @@ export class MultiChain implements IMultiChain {
   private xdefiClient: XdefiClient | null = null
 
   private metamaskClient: MetaMaskClient | null = null
+
+  private trustwalletClient: WalletConnectClient | null = null
 
   private wallet: Wallet | null = null
 
@@ -228,6 +236,40 @@ export class MultiChain implements IMultiChain {
     }
   }
 
+  connectTrustWallet = async (options?: WalletConnectOption) => {
+    this.trustwalletClient = new WalletConnectClient(options)
+
+    if (!this.trustwalletClient.connected) {
+      await this.trustwalletClient.connect()
+    }
+
+    if (!this.wallet) this.initWallets()
+
+    await this.bnb.connectTrustWallet(this.trustwalletClient)
+    await this.eth.connectTrustWallet(this.trustwalletClient)
+
+    const bnbAddress = this.bnb.getClient().getAddress().toLowerCase()
+    const ethAddress = this.eth.getClient().getAddress().toLowerCase()
+
+    if (!this.wallet) this.initWallets()
+
+    if (this.wallet) {
+      this.wallet = {
+        ...this.wallet,
+        [BNBChain]: {
+          address: bnbAddress,
+          balance: [],
+          walletType: WalletOption.TRUSTWALLET,
+        },
+        [ETHChain]: {
+          address: ethAddress,
+          balance: [],
+          walletType: WalletOption.TRUSTWALLET,
+        },
+      }
+    }
+  }
+
   connectXDefiWallet = async (): Promise<void> => {
     this.xdefiClient = new XdefiClient(this.network)
 
@@ -293,6 +335,11 @@ export class MultiChain implements IMultiChain {
   resetClients = () => {
     this.phrase = ''
     this.wallet = null
+
+    // kill TrustWallet session if TW client is valid
+    if (this.trustwalletClient) {
+      this.trustwalletClient.killSession()
+    }
 
     // reset all clients
     this.thor = new ThorChain({ network: this.network })
