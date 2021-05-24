@@ -1,20 +1,24 @@
 import { useEffect, useState, useMemo } from 'react'
 
-import { Asset } from 'multichain-sdk'
+import { Asset, hasConnectedWallet } from 'multichain-sdk'
 
 import { useMidgard } from 'redux/midgard/hooks'
 import { TxTrackerStatus } from 'redux/midgard/types'
+import { useWallet } from 'redux/wallet/hooks'
 
 import { multichain } from 'services/multichain'
 
 export const useApprove = (asset: Asset, hasWallet = true) => {
   const { approveStatus } = useMidgard()
+  const { wallet } = useWallet()
   const [isApproved, setApproved] = useState<boolean | null>(
     hasWallet ? null : true,
   )
 
+  const isWalletConnected = useMemo(() => hasConnectedWallet(wallet), [wallet])
+
   useEffect(() => {
-    if (!hasWallet) {
+    if (!hasWallet || !isWalletConnected) {
       setApproved(true)
       return
     }
@@ -28,7 +32,7 @@ export const useApprove = (asset: Asset, hasWallet = true) => {
     }
 
     checkApproved()
-  }, [asset, approveStatus, hasWallet])
+  }, [asset, approveStatus, hasWallet, isWalletConnected])
 
   const assetApproveStatus = useMemo(() => approveStatus?.[asset.toString()], [
     approveStatus,
