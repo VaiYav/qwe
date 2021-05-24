@@ -3,7 +3,12 @@ import QRCodeModal from '@walletconnect/qrcode-modal'
 import { IConnector, IWalletConnectOptions } from '@walletconnect/types'
 
 import { networkByChain, supportedNetworks, errorCodes } from './constants'
-import { IAccount, TWSupportedChain } from './types'
+import {
+  IAccount,
+  IWalletConnectListeners,
+  TWSupportedChain,
+  WalletConnectOption,
+} from './types'
 import { removeCache } from './utils'
 
 const qrcodeModalOptions = {
@@ -11,18 +16,21 @@ const qrcodeModalOptions = {
 }
 
 export class WalletConnectClient {
-  connector: IConnector | undefined
+  connector: IConnector | null
 
   accounts: IAccount[] = []
 
   private options: IWalletConnectOptions
 
-  constructor(options?: IWalletConnectOptions) {
-    this.connector = undefined
+  private listeners: IWalletConnectListeners | undefined
+
+  constructor(walletconnectOptions?: WalletConnectOption) {
+    this.connector = null
     this.options = {
       qrcodeModalOptions,
-      ...options,
+      ...walletconnectOptions?.options,
     }
+    this.listeners = walletconnectOptions?.listeners
   }
 
   get connected() {
@@ -70,6 +78,16 @@ export class WalletConnectClient {
           resolve(res)
         })
       })
+
+      connector.on('disconnect', (error) => {
+        if (error) reject(error)
+
+        if (this.listeners && this.listeners.disconnect) {
+          this.listeners.disconnect()
+        }
+
+        this.connector = null
+      })
     })
 
     return connector
@@ -79,6 +97,8 @@ export class WalletConnectClient {
     if (this.connector) {
       await this.connector.killSession()
     }
+
+    this.connector = null
   }
 
   getAccounts = async (): Promise<IAccount[]> => {

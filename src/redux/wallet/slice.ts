@@ -43,7 +43,7 @@ const slice = createSlice({
   reducers: {
     disconnect(state) {
       state.keystore = null
-      state.wallet = null
+      state.wallet = initialWallet
       state.walletLoading = false
     },
     connectKeystore(state, action: PayloadAction<Keystore>) {
