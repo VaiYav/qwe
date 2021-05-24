@@ -322,6 +322,17 @@ export const TxMonitor = ({ txTracker }: { txTracker: TxTracker }) => {
       const { inAssets = [] } = submitTx
       const { asset: approveAsset } = inAssets[0]
 
+      if (status === TxTrackerStatus.Failed) {
+        return (
+          <Styled.TxInformation>
+            <ProgressIcon status="failed" />
+            <Label color="error">
+              Approve {Asset.fromAssetString(approveAsset)?.ticker} Failed
+            </Label>
+          </Styled.TxInformation>
+        )
+      }
+
       return (
         <>
           <Styled.TxInformation>
