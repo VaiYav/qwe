@@ -197,7 +197,7 @@ export class MultiChain implements IMultiChain {
         if (this.wallet) {
           this.wallet = {
             ...this.wallet,
-            [ETHChain]: {
+            [BNBChain]: {
               address: ledgerAddress,
               balance: [],
               walletType: WalletOption.LEDGER,
