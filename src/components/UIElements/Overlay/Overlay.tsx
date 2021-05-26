@@ -37,7 +37,7 @@ const AnimatedDialogContent = animated(DialogContent)
 // destructure to not pass custom props to Dialog DOM element
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const StyledDialogContent = styled(
-  ({ minHeight, maxHeight, mobile, isOpen, ...rest }) => (
+  ({ minHeight, maxHeight, mobile, hasScroll, isOpen, ...rest }) => (
     <AnimatedDialogContent {...rest} />
   ),
 ).attrs({
@@ -51,7 +51,7 @@ const StyledDialogContent = styled(
       ${(props) => transparentize(0.7, props.theme.palette.background[0])};
     padding: 0px;
     width: 50vw;
-    overflow: hidden;
+    overflow: ${({ hasScroll }) => (hasScroll ? 'auto' : 'hidden')};
 
     align-self: ${({ mobile }) => (mobile ? 'flex-end' : 'center')};
 
@@ -90,6 +90,7 @@ export interface OverlayProps {
   onDismiss: () => void
   minHeight?: number | false
   maxHeight?: number
+  hasScroll?: boolean
   initialFocusRef?: React.RefObject<any>
   children?: React.ReactNode
 }
@@ -99,6 +100,7 @@ function Overlay({
   onDismiss,
   minHeight = false,
   maxHeight = 50,
+  hasScroll = false,
   initialFocusRef,
   children,
 }: OverlayProps) {
@@ -151,6 +153,7 @@ function Overlay({
                   : {})}
                 minHeight={minHeight}
                 maxHeight={maxHeight}
+                hasScroll={hasScroll}
                 mobile={isMobile}
               >
                 {/* prevents the automatic focusing of inputs on mobile by the reach dialog */}
