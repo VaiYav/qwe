@@ -3,6 +3,7 @@ import React, { useState, useMemo, useRef } from 'react'
 import { Menu as MenuIcon, X as XIcon } from 'react-feather'
 import { useLocation } from 'react-router-dom'
 
+import { useMedia } from 'hooks/useMedia'
 import { useOnClickOutside } from 'hooks/useOnClickOutside'
 
 import { NavLink } from '../Link'
@@ -11,6 +12,8 @@ import * as Styled from './Navbar.style'
 
 export const Navbar = () => {
   const { pathname } = useLocation()
+
+  const isMediaLg = useMedia('(min-width: 1238px)')
 
   const [isOpen, setOpen] = useState(false)
   const navRef = useRef(null)
@@ -30,12 +33,14 @@ export const Navbar = () => {
   }, [])
 
   const renderMenu = useMemo(() => {
-    return navMenuList.map(({ link, label }) => (
-      <NavLink to={link} key={link} active={pathname === link}>
-        {label}
-      </NavLink>
-    ))
-  }, [pathname])
+    return navMenuList
+      .filter(({ isWideOnly }) => !isWideOnly || isMediaLg)
+      .map(({ link, label }) => (
+        <NavLink to={link} key={link} active={pathname === link}>
+          {label}
+        </NavLink>
+      ))
+  }, [pathname, isMediaLg])
 
   return (
     <nav ref={navRef}>

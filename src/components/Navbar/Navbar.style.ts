@@ -11,7 +11,7 @@ export const navbar = styled.nav``
 export const DesktopNavbar = styled.div`
   display: none;
 
-  ${media.sm`
+  ${media.md`
     display: flex;
   `}
   align-items: center;
@@ -34,7 +34,7 @@ export const MobileNavbar = styled.div`
   display: flex;
   flex-direction: column;
 
-  ${media.sm`
+  ${media.md`
     display: none;
   `}
 
@@ -59,7 +59,7 @@ export const NavbarButton = styled(Button).attrs({
   &.ant-btn {
     display: flex;
 
-    ${media.sm`
+    ${media.md`
       display: none;
     `}
 

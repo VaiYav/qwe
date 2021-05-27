@@ -24,6 +24,13 @@ export const Card = styled.div`
     border-bottom-left-radius: 3px;
     border-top-left-radius: 3px;
     background: ${palette('gradient', 0)};
+
+    @media not all and (min-resolution: 0.001dpcm) {
+      @supports (-webkit-text-size-adjust: none) and (not (-ms-ime-align: auto))
+        and (not (-moz-appearance: none)) {
+        top: 8px;
+      }
+    }
   }
 `
 

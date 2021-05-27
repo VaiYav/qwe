@@ -67,6 +67,10 @@ export const InputWrapper = styled(Input)<Props>`
     }
   }
 
+  .ant-input {
+    background: ${palette('background', 1)};
+  }
+
   .ant-input-prefix {
     display: flex;
     align-items: center;
