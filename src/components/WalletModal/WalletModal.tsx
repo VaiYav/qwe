@@ -193,7 +193,7 @@ const WalletModal = () => {
     <Overlay
       isOpen={isConnectModalOpen}
       maxHeight={100}
-      hasScroll
+      hasScrollY
       onDismiss={() => setIsConnectModalOpen(false)}
     >
       <Styled.ConnectContainer>

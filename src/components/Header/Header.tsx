@@ -12,6 +12,8 @@ import { useGlobalState } from 'redux/hooks'
 import { useMidgard } from 'redux/midgard/hooks'
 import { useWallet } from 'redux/wallet/hooks'
 
+import { useMedia } from 'hooks/useMedia'
+
 import { HOME_ROUTE } from 'settings/constants'
 import { currencyIndexAssets } from 'settings/constants/currency'
 
@@ -30,6 +32,10 @@ export const Header = () => {
   const { wallet, isWalletLoading, setIsConnectModalOpen } = useWallet()
   const { refreshPage } = useGlobalState()
   const { stats } = useMidgard()
+
+  const isPriceTickerVisible = useMedia('(min-width: 960px)')
+  const isGadgetVisible = useMedia('(min-width: 824px)')
+  const isRefreshVisible = useMedia('(min-width: 375px)')
 
   const [drawerVisible, setDrawerVisible] = useState(false)
 
@@ -76,10 +82,12 @@ export const Header = () => {
       </Styled.HeaderLeft>
 
       <Styled.HeaderAction>
-        <Styled.RunePrice>
-          <Label weight="bold">{priceLabel}</Label>
-        </Styled.RunePrice>
-        {isDesktopView && <NetworkStatus />}
+        {isPriceTickerVisible && (
+          <Styled.RunePrice>
+            <Label weight="bold">{priceLabel}</Label>
+          </Styled.RunePrice>
+        )}
+        {isGadgetVisible && <NetworkStatus />}
         <Styled.ToolWrapper>
           <CurrencySelector
             selected={baseCurrencyAsset}
@@ -87,14 +95,14 @@ export const Header = () => {
             onSelect={handleSelectCurrency}
           />
         </Styled.ToolWrapper>
-        {isDesktopView && <ThemeSwitch />}
+        {isGadgetVisible && <ThemeSwitch />}
         <Styled.WalletBtn
           onClick={handleClickWalletBtn}
           connected={isConnected}
           loading={isWalletLoading}
         />
         <WalletDrawer visible={drawerVisible} onClose={handleCloseDrawer} />
-        <Refresh onRefresh={refreshPage} />
+        {isRefreshVisible && <Refresh onRefresh={refreshPage} />}
         <TxManager />
       </Styled.HeaderAction>
     </Styled.HeaderContainer>

@@ -31,7 +31,11 @@ export const HeaderContainer = styled.div`
 export const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  margin: 0 10px;
+  margin: 0px;
+
+  ${media.xs`
+    margin: 0 10px;
+  `}
 
   ${media.sm`
     margin: 0 20px;

@@ -11,7 +11,7 @@ type MediaQueriesType = {
 
 // SC Media breakpoints utility
 const mediaQueries: MediaQueriesType = {
-  xs: '(min-width: 0px)',
+  xs: '(min-width: 376px)',
   sm: '(min-width: 576px)',
   md: '(min-width: 768px)',
   lg: '(min-width: 992px)',
