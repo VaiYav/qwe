@@ -69,6 +69,7 @@ export const InputWrapper = styled(Input)<Props>`
 
   .ant-input {
     background: ${palette('background', 1)};
+    color: ${palette('text', 0)};
   }
 
   .ant-input-prefix {
