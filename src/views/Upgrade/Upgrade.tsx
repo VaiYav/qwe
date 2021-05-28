@@ -1,8 +1,9 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 
 import {
   ContentTitle,
   Helmet,
+  AddressSelectCard,
   AssetInputCard,
   Slider,
   FancyButton,
@@ -28,6 +29,8 @@ import { useNetworkFee } from 'hooks/useNetworkFee'
 import { useTxTracker } from 'hooks/useTxTracker'
 
 import { multichain } from 'services/multichain'
+
+import { truncateAddress } from 'helpers/string'
 
 import { TX_FEE_TOOLTIP_LABEL } from 'settings/constants'
 
@@ -82,7 +85,9 @@ const UpgradePanel = ({
 
   const [visibleConfirmModal, setVisibleConfirmModal] = useState(false)
 
-  const recipientThor = multichain.getWalletAddressByChain('THOR')
+  const [recipientThor, setRecipientThor] = useState('')
+
+  const thorchainAddr = multichain.getWalletAddressByChain('THOR') || ''
 
   const assetBalance: Amount = useMemo(() => {
     if (wallet) {
@@ -94,6 +99,13 @@ const UpgradePanel = ({
   const { inboundFee } = useNetworkFee({
     inputAsset: selectedAsset,
   })
+
+  useEffect(() => {
+    if (wallet) {
+      const address = multichain.getWalletAddressByChain('THOR')
+      setRecipientThor(address || '')
+    }
+  }, [wallet])
 
   const handleSelectAsset = useCallback((selected: Asset) => {
     setSelectedAsset(selected)
@@ -127,9 +139,8 @@ const UpgradePanel = ({
 
   const handleConfirmUpgrade = useCallback(async () => {
     setVisibleConfirmModal(false)
-    const recipient = multichain.getWalletAddressByChain('THOR')
 
-    if (selectedAsset && recipient) {
+    if (selectedAsset && recipientThor) {
       const runeAmount = new AssetAmount(selectedAsset, upgradeAmount)
 
       // register to tx tracker
@@ -148,11 +159,15 @@ const UpgradePanel = ({
               amount: upgradeAmount.toSignificant(6),
             },
           ],
+          recipient: recipientThor,
         },
       })
 
       try {
-        const txHash = await multichain.upgrade({ runeAmount })
+        const txHash = await multichain.upgrade({
+          runeAmount,
+          recipient: recipientThor,
+        })
 
         // start polling
         pollTransaction({
@@ -173,7 +188,7 @@ const UpgradePanel = ({
             ],
             txID: txHash,
             submitDate: new Date(),
-            recipient,
+            recipient: recipientThor,
           },
         })
       } catch (error) {
@@ -192,6 +207,7 @@ const UpgradePanel = ({
     upgradeAmount,
     submitTransaction,
     pollTransaction,
+    recipientThor,
     setTxFailed,
   ])
 
@@ -204,8 +220,16 @@ const UpgradePanel = ({
       Notification({
         type: 'info',
         message: 'You have to connect wallet for Thorchain.',
-        duration: 3,
-        placement: 'topRight',
+      })
+      return
+    }
+    if (
+      !multichain.validateAddress({ chain: 'THOR', address: recipientThor })
+    ) {
+      Notification({
+        type: 'error',
+        message: 'Invalid Recipient Address',
+        description: 'Recipient address should be a valid address.',
       })
       return
     }
@@ -224,9 +248,14 @@ const UpgradePanel = ({
           description={inboundFee.toCurrencyFormat()}
           tooltip={TX_FEE_TOOLTIP_LABEL}
         />
+        <br />
+        <Information
+          title="Recipient Address"
+          description={truncateAddress(recipientThor)}
+        />
       </Styled.ConfirmModalContent>
     )
-  }, [inboundFee, selectedAsset])
+  }, [inboundFee, selectedAsset, recipientThor])
 
   const title = useMemo(() => `Upgrade ${selectedAsset.chain} RUNE`, [
     selectedAsset,
@@ -258,6 +287,14 @@ const UpgradePanel = ({
             tooltip={TX_FEE_TOOLTIP_LABEL}
           />
         </Styled.FormItem>
+
+        <AddressSelectCard
+          title="Recipient Address"
+          address={recipientThor}
+          chain="THOR"
+          chainAddr={thorchainAddr}
+          onAddressChange={setRecipientThor}
+        />
 
         <Styled.ConfirmButtonContainer>
           <FancyButton onClick={handleUpgrade} error={false}>
