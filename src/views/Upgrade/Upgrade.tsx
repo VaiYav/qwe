@@ -82,6 +82,8 @@ const UpgradePanel = ({
 
   const [visibleConfirmModal, setVisibleConfirmModal] = useState(false)
 
+  const recipientThor = multichain.getWalletAddressByChain('THOR')
+
   const assetBalance: Amount = useMemo(() => {
     if (wallet) {
       return getAssetBalance(selectedAsset, wallet).amount
@@ -198,8 +200,17 @@ const UpgradePanel = ({
   }, [])
 
   const handleUpgrade = useCallback(() => {
+    if (!recipientThor) {
+      Notification({
+        type: 'info',
+        message: 'You have to connect wallet for Thorchain.',
+        duration: 3,
+        placement: 'topRight',
+      })
+      return
+    }
     setVisibleConfirmModal(true)
-  }, [])
+  }, [recipientThor])
 
   const renderConfirmModalContent = useMemo(() => {
     return (
