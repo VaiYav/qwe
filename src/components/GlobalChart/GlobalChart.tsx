@@ -22,8 +22,8 @@ export const GlobalChart = () => {
   const {
     isGlobalHistoryLoading,
     earningsHistory,
-    swapHistory,
-    liquidityHistory,
+    swapGlobalHistory,
+    liquidityGlobalHistory,
     tvlHistory,
   } = useMidgard()
 
@@ -72,12 +72,16 @@ export const GlobalChart = () => {
   }, [volumeChartIndexes, liquidityChartIndexes])
 
   const volumeChartData: ChartData = useMemo(() => {
-    if (isGlobalHistoryLoading || !swapHistory || !liquidityHistory) {
+    if (
+      isGlobalHistoryLoading ||
+      !swapGlobalHistory ||
+      !liquidityGlobalHistory
+    ) {
       return initialChartData
     }
 
-    const swapData = swapHistory.intervals || []
-    const liquidityData = liquidityHistory.intervals || []
+    const swapData = swapGlobalHistory.intervals || []
+    const liquidityData = liquidityGlobalHistory.intervals || []
 
     const totalVolume: ChartDetail[] = []
     const swapVolume: ChartDetail[] = []
@@ -135,8 +139,8 @@ export const GlobalChart = () => {
       },
     }
   }, [
-    swapHistory,
-    liquidityHistory,
+    swapGlobalHistory,
+    liquidityGlobalHistory,
     isGlobalHistoryLoading,
     initialChartData,
     chartValueUnit,
@@ -144,7 +148,7 @@ export const GlobalChart = () => {
   ])
 
   const liquidityChartData: ChartData = useMemo(() => {
-    if (isGlobalHistoryLoading || !earningsHistory || !liquidityHistory) {
+    if (isGlobalHistoryLoading || !earningsHistory || !liquidityGlobalHistory) {
       return initialChartData
     }
 
@@ -233,7 +237,7 @@ export const GlobalChart = () => {
     }
   }, [
     tvlHistory,
-    liquidityHistory,
+    liquidityGlobalHistory,
     earningsHistory,
     isGlobalHistoryLoading,
     initialChartData,

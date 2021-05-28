@@ -42,35 +42,15 @@ export const useMidgard = () => {
   // get earnings, swap, liquidity history
   const getGlobalHistory = useCallback(() => {
     // fetch historical data till past day
+    const query = {
+      interval: PER_DAY,
+      count: MAX_HISTORY_COUNT,
+    }
 
-    dispatch(
-      actions.getEarningsHistory({
-        interval: PER_DAY,
-        count: MAX_HISTORY_COUNT,
-      }),
-    )
-    dispatch(
-      actions.getTVLHistory({
-        interval: PER_DAY,
-        count: MAX_HISTORY_COUNT,
-      }),
-    )
-    dispatch(
-      actions.getSwapHistory({
-        query: {
-          interval: PER_DAY,
-          count: MAX_HISTORY_COUNT,
-        },
-      }),
-    )
-    dispatch(
-      actions.getLiquidityHistory({
-        query: {
-          interval: PER_DAY,
-          count: MAX_HISTORY_COUNT,
-        },
-      }),
-    )
+    dispatch(actions.getEarningsHistory(query))
+    dispatch(actions.getTVLHistory(query))
+    dispatch(actions.getSwapHistory({ query }))
+    dispatch(actions.getLiquidityHistory({ query }))
   }, [dispatch])
 
   const getPoolHistory = useCallback(

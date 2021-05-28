@@ -31,8 +31,10 @@ const initialState: State = {
   tvlHistory: null,
   tvlHistoryLoading: false,
   swapHistory: null,
+  swapGlobalHistory: null,
   swapHistoryLoading: false,
   liquidityHistory: null,
+  liquidityGlobalHistory: null,
   liquidityHistoryLoading: false,
   txData: null,
   txDataLoading: false,
@@ -297,7 +299,8 @@ const slice = createSlice({
       })
       .addCase(midgardActions.getSwapHistory.fulfilled, (state, action) => {
         state.swapHistoryLoading = false
-        state.swapHistory = action.payload
+        if (action.meta.arg.pool) state.swapHistory = action.payload
+        else state.swapGlobalHistory = action.payload
       })
       .addCase(midgardActions.getSwapHistory.rejected, (state) => {
         state.swapHistoryLoading = true
@@ -310,7 +313,8 @@ const slice = createSlice({
         midgardActions.getLiquidityHistory.fulfilled,
         (state, action) => {
           state.liquidityHistoryLoading = false
-          state.liquidityHistory = action.payload
+          if (action.meta.arg.pool) state.liquidityHistory = action.payload
+          else state.liquidityGlobalHistory = action.payload
         },
       )
       .addCase(midgardActions.getLiquidityHistory.rejected, (state) => {
