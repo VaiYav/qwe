@@ -130,8 +130,10 @@ export interface State {
   tvlHistory: TVLHistory | null
   tvlHistoryLoading: boolean
   swapHistory: SwapHistory | null
+  swapGlobalHistory: SwapHistory | null
   swapHistoryLoading: boolean
   liquidityHistory: LiquidityHistory | null
+  liquidityGlobalHistory: LiquidityHistory | null
   liquidityHistoryLoading: boolean
   stats: StatsData | null
   networkData: Network | null

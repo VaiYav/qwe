@@ -11,7 +11,7 @@ import { useWallet } from 'redux/wallet/hooks'
 import { getSendRoute } from 'settings/constants'
 
 import { BalanceView } from '../BalanceView'
-import { PhraseModal } from '../Modals'
+import { DisconnectModal, PhraseModal } from '../Modals'
 import { Button } from '../UIElements/Button'
 import { Drawer } from './WalletDrawer.style'
 import * as Styled from './WalletDrawer.style'
@@ -25,6 +25,7 @@ export const WalletDrawer = (props: WalletDrawerProps) => {
   const { visible, onClose = () => {} } = props
 
   const [showPhraseModal, setShowPhraseModal] = useState(false)
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false)
 
   const history = useHistory()
   const dispatch = useDispatch()
@@ -66,6 +67,16 @@ export const WalletDrawer = (props: WalletDrawerProps) => {
     [history],
   )
 
+  const onHandleDisconnect = useCallback(() => {
+    onClose()
+    setShowDisconnectModal(true)
+  }, [onClose])
+
+  const onConfirmDisconnect = useCallback(() => {
+    disconnectWallet()
+    setShowDisconnectModal(false)
+  }, [disconnectWallet])
+
   return (
     <Drawer
       visible={visible}
@@ -89,7 +100,7 @@ export const WalletDrawer = (props: WalletDrawerProps) => {
             <Button
               typevalue="outline"
               color="warning"
-              onClick={disconnectWallet}
+              onClick={onHandleDisconnect}
               round
               fixedWidth={false}
             >
@@ -115,6 +126,13 @@ export const WalletDrawer = (props: WalletDrawerProps) => {
         <PhraseModal
           visible={showPhraseModal}
           onCancel={() => setShowPhraseModal(false)}
+        />
+      )}
+      {wallet && (
+        <DisconnectModal
+          visible={showDisconnectModal}
+          onOk={onConfirmDisconnect}
+          onCancel={() => setShowDisconnectModal(false)}
         />
       )}
     </Drawer>
