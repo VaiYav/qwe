@@ -80,6 +80,7 @@ export type DepositParams = TxParams & {
 
 export type UpgradeParams = {
   runeAmount: AssetAmount
+  recipient: string
 }
 
 export enum WalletOption {
