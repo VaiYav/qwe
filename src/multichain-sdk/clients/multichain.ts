@@ -975,14 +975,12 @@ export class MultiChain implements IMultiChain {
      */
 
     try {
-      const { runeAmount } = params
+      const { runeAmount, recipient: walletAddress } = params
       const { chain } = runeAmount.asset
 
       const inboundData = await this.getInboundDataByChain(chain)
       const { address: poolAddress, router } = inboundData
       const feeRate = getFeeRate({ inboundData, feeOptionKey: this.feeOption })
-
-      const walletAddress = this.getWalletAddressByChain(THORChain)
 
       if (!walletAddress) {
         throw Error('rune wallet not found')
