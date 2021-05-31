@@ -101,11 +101,9 @@ const UpgradePanel = ({
   })
 
   useEffect(() => {
-    if (wallet) {
-      const address = multichain.getWalletAddressByChain('THOR')
-      setRecipientThor(address || '')
-    }
-  }, [wallet])
+    const address = multichain.getWalletAddressByChain('THOR')
+    setRecipientThor(address || '')
+  }, [])
 
   const handleSelectAsset = useCallback((selected: Asset) => {
     setSelectedAsset(selected)
