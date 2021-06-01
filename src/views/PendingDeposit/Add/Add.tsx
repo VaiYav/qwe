@@ -422,14 +422,47 @@ export const AddLiquidityPanel = ({
     assetAmount,
   ])
 
-  const isAddLiquidityValid = useMemo(() => {
-    return runeAmount.gt(0)
-  }, [runeAmount])
+  const minRuneAmount: Amount = useMemo(
+    () => AssetAmount.getMinAmountByChain('THOR').amount,
+    [],
+  )
+  const minAssetAmount: Amount = useMemo(() => {
+    if (poolAsset.isGasAsset()) {
+      return AssetAmount.getMinAmountByChain(poolAsset.chain)
+    }
+
+    return Amount.fromAssetAmount(0, 8)
+  }, [poolAsset])
+
+  const isValidDeposit: {
+    valid: boolean
+    msg?: string
+  } = useMemo(() => {
+    if (!isAssetPending) {
+      if (!assetAmount.gt(minAssetAmount)) {
+        return {
+          valid: false,
+          msg: 'Insufficient Amount',
+        }
+      }
+    }
+
+    if (isAssetPending) {
+      if (!runeAmount.gt(minRuneAmount)) {
+        return {
+          valid: false,
+          msg: 'Insufficient Amount',
+        }
+      }
+    }
+
+    return { valid: true }
+  }, [isAssetPending, runeAmount, assetAmount, minRuneAmount, minAssetAmount])
 
   return (
     <Styled.ContentPanel>
       <AssetInputCard
-        title="Pending"
+        title={isAssetPending ? 'Pending' : 'Add To Complete'}
         asset={poolAsset}
         amount={assetAmount}
         balance={poolAssetBalance}
@@ -447,7 +480,7 @@ export const AddLiquidityPanel = ({
         </Styled.SwitchPair>
       </Styled.ToolContainer>
       <AssetInputCard
-        title="Add To Complete"
+        title={!isAssetPending ? 'Pending' : 'Add To Complete'}
         asset={Asset.RUNE()}
         amount={runeAmount}
         usdPrice={runeAssetPriceInUSD}
@@ -477,8 +510,8 @@ export const AddLiquidityPanel = ({
       </Styled.DetailContent>
 
       <Styled.ConfirmButtonContainer>
-        <FancyButton onClick={handleAddLiquidity} error={!isAddLiquidityValid}>
-          Add Liquidity
+        <FancyButton onClick={handleAddLiquidity} error={!isValidDeposit.valid}>
+          {isValidDeposit.valid ? 'Add Liquidity' : isValidDeposit.msg}
         </FancyButton>
       </Styled.ConfirmButtonContainer>
 
