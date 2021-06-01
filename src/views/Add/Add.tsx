@@ -616,21 +616,51 @@ const AddLiquidityPanel = ({
     )
   }, [poolAsset, inboundAssetFee, pools])
 
-  const isAddLiquidityValid = useMemo(() => {
+  const minRuneAmount: Amount = useMemo(
+    () => AssetAmount.getMinAmountByChain('THOR').amount,
+    [],
+  )
+  const minAssetAmount: Amount = useMemo(() => {
+    if (poolAsset.isGasAsset()) {
+      return AssetAmount.getMinAmountByChain(poolAsset.chain)
+    }
+
+    return Amount.fromAssetAmount(0, 8)
+  }, [poolAsset])
+
+  const isValidDeposit: {
+    valid: boolean
+    msg?: string
+  } = useMemo(() => {
     if (liquidityType === LiquidityTypeOption.SYMMETRICAL) {
-      return runeAmount.gt(0) && assetAmount.gt(0)
+      if (!runeAmount.gt(minRuneAmount) || !assetAmount.gt(minAssetAmount)) {
+        return {
+          valid: false,
+          msg: 'Insufficient Amount',
+        }
+      }
     }
 
     if (liquidityType === LiquidityTypeOption.ASSET) {
-      return assetAmount.gt(0)
+      if (!assetAmount.gt(minAssetAmount)) {
+        return {
+          valid: false,
+          msg: 'Insufficient Amount',
+        }
+      }
     }
 
     if (liquidityType === LiquidityTypeOption.RUNE) {
-      return runeAmount.gt(0)
+      if (!runeAmount.gt(minRuneAmount)) {
+        return {
+          valid: false,
+          msg: 'Insufficient Amount',
+        }
+      }
     }
 
-    return false
-  }, [liquidityType, runeAmount, assetAmount])
+    return { valid: true }
+  }, [liquidityType, runeAmount, assetAmount, minRuneAmount, minAssetAmount])
 
   const isApproveRequired = useMemo(() => {
     if (
@@ -719,8 +749,9 @@ const AddLiquidityPanel = ({
           <FancyButton
             disabled={isApproveRequired}
             onClick={handleAddLiquidity}
+            error={!isValidDeposit.valid}
           >
-            Add
+            {isValidDeposit.valid ? 'Add Liquidity' : isValidDeposit.msg}
           </FancyButton>
         </Styled.ConfirmButtonContainer>
       )}
@@ -728,9 +759,9 @@ const AddLiquidityPanel = ({
         <Styled.ConfirmButtonContainer>
           <FancyButton
             onClick={handleAddLiquidity}
-            error={!isAddLiquidityValid}
+            error={!isValidDeposit.valid}
           >
-            Add Liquidity
+            {isValidDeposit.valid ? 'Add Liquidity' : isValidDeposit.msg}
           </FancyButton>
         </Styled.ConfirmButtonContainer>
       )}
