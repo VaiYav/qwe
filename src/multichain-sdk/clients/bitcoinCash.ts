@@ -99,7 +99,8 @@ export class BchChain implements IBchChain {
 
   loadBalance = async (): Promise<AssetAmount[]> => {
     try {
-      const balances: Balance[] = await this.client.getBalance()
+      const address = this.client.getAddress()
+      const balances: Balance[] = await this.client.getBalance(address)
 
       this.balances = balances.map((data: Balance) => {
         const { asset, amount } = data
