@@ -716,6 +716,7 @@ export class EthChain implements IEthChain {
 
       return res?.hash ?? ''
     } catch (error) {
+      console.log(error)
       throw Error('deposit call failed')
     }
   }
