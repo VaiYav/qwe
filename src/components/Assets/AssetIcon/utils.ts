@@ -16,6 +16,9 @@ export const getAssetIconUrl = (asset: Asset): string => {
   if (asset.chain === 'ETH' && asset.ticker !== 'ETH') {
     if (!IS_TESTNET) {
       const contract = getContractAddressFromAsset(asset)
+      if (asset.ticker === 'ALCX') {
+        return 'https://etherscan.io/token/images/Alchemix_32.png'
+      }
 
       return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${contract}/logo.png`
     }
@@ -27,10 +30,6 @@ export const getAssetIconUrl = (asset: Asset): string => {
 
     if (asset.ticker === 'DAI') {
       return 'https://raw.githubusercontent.com/compound-finance/token-list/master/assets/asset_DAI.svg'
-    }
-
-    if (asset.ticker === 'ALCX') {
-      return 'https://etherscan.io/token/images/Alchemix_32.png'
     }
   }
 
