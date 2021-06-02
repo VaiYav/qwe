@@ -7,7 +7,6 @@ import {
   Client as EthClient,
   ETHAddress,
   getTokenAddress,
-  estimateDefaultFeesWithGasPricesAndLimits,
   TxOverrides,
 } from '@xchainjs/xchain-ethereum'
 import {
@@ -24,6 +23,7 @@ import { MetaMaskClient } from 'metamask-sdk'
 import { WalletConnectClient } from 'wallet-core/walletconnect'
 
 import { ETH_DECIMAL } from 'multichain-sdk/constants'
+import { getGasPrice } from 'multichain-sdk/utils/gas'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import {
@@ -177,22 +177,17 @@ export class EthChain implements IEthChain {
 
         // override `overrides` if `feeOptionKey` is provided
         if (feeOptionKey) {
-          const gasPriceValue = await this.client
-            .estimateGasPrices()
-            .then((prices) => prices[feeOptionKey])
-            .catch(
-              () =>
-                estimateDefaultFeesWithGasPricesAndLimits().gasPrices[
-                  feeOptionKey
-                ],
-            )
+          const gasPriceValue = await getGasPrice({
+            client: this.client,
+            feeOptionKey,
+          })
           const gasLimitValue = await this.client
             .estimateGasLimit({ asset, recipient, amount, memo })
             .catch(() => defaultGasLimit)
 
           overrides = {
             gasLimit: gasLimitValue,
-            gasPrice: BN.from(gasPriceValue.amount().toFixed()),
+            gasPrice: BN.from(gasPriceValue),
           }
         }
 
@@ -324,22 +319,17 @@ export class EthChain implements IEthChain {
 
         // override `overrides` if `feeOptionKey` is provided
         if (feeOptionKey) {
-          const gasPriceValue = await this.client
-            .estimateGasPrices()
-            .then((prices) => prices[feeOptionKey])
-            .catch(
-              () =>
-                estimateDefaultFeesWithGasPricesAndLimits().gasPrices[
-                  feeOptionKey
-                ],
-            )
+          const gasPriceValue = await getGasPrice({
+            client: this.client,
+            feeOptionKey,
+          })
           const gasLimitValue = await this.client
             .estimateGasLimit({ asset, recipient, amount, memo })
             .catch(() => defaultGasLimit)
 
           overrides = {
             gasLimit: gasLimitValue,
-            gasPrice: BN.from(gasPriceValue.amount().toFixed()),
+            gasPrice: BN.from(gasPriceValue),
           }
         }
 
@@ -466,22 +456,17 @@ export class EthChain implements IEthChain {
 
         // override `overrides` if `feeOptionKey` is provided
         if (feeOptionKey) {
-          const gasPriceValue = await this.client
-            .estimateGasPrices()
-            .then((prices) => prices[feeOptionKey])
-            .catch(
-              () =>
-                estimateDefaultFeesWithGasPricesAndLimits().gasPrices[
-                  feeOptionKey
-                ],
-            )
+          const gasPriceValue = await getGasPrice({
+            client: this.client,
+            feeOptionKey,
+          })
           const gasLimitValue = await this.client
             .estimateGasLimit({ asset, recipient, amount, memo })
             .catch(() => defaultGasLimit)
 
           overrides = {
             gasLimit: gasLimitValue,
-            gasPrice: BN.from(gasPriceValue.amount().toFixed()),
+            gasPrice: BN.from(gasPriceValue),
           }
         }
 
@@ -696,11 +681,12 @@ export class EthChain implements IEthChain {
     const checkSummedAddress = this.getCheckSumAddress(asset)
 
     // get gas amount based on the fee option
-    const gasPrice = feeRate
-      ? parseUnits(String(feeRate), 'gwei').toString()
-      : (await this.client.estimateGasPrices())[feeOptionKey]
-          .amount()
-          .toFixed(0)
+    const gasPrice = await getGasPrice({
+      client: this.client,
+      feeRate,
+      feeOptionKey,
+      decimal: 0,
+    })
 
     const contractParams = [
       recipient, // vault address
@@ -720,14 +706,20 @@ export class EthChain implements IEthChain {
       throw Error('invalid router')
     }
 
-    const res: any = await this.client.call(
-      router,
-      TCRopstenAbi,
-      'deposit',
-      contractParams,
-    )
+    try {
+      const res: any = await this.client.call(
+        router,
+        TCRopstenAbi,
+        'deposit',
+        contractParams,
+      )
 
-    return res?.hash ?? ''
+      return res?.hash ?? ''
+    } catch (error) {
+      if (error?.method === 'estimateGas')
+        throw Error('Estimating gas failed. You may have not enough ETH.')
+      else throw Error('Deposit call failed.')
+    }
   }
 
   /**
