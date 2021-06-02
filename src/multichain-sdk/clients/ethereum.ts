@@ -718,7 +718,7 @@ export class EthChain implements IEthChain {
     } catch (error) {
       if (error?.method === 'estimateGas')
         throw Error(
-          'Unexpected issue with estimating the gas. You may have no enough ETH.',
+          'Unexpected issue with estimating the gas. You may have not enough ETH.',
         )
       else throw Error('Deposit call failed.')
     }
