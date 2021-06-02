@@ -682,6 +682,7 @@ const AddLiquidityPanel = ({
         poolAsset={poolAsset}
         selected={liquidityType}
         onSelect={handleSelectLiquidityType}
+        isAsymAvailable={pool.detail.status === 'available'}
       />
       <AssetInputCard
         title="Add"

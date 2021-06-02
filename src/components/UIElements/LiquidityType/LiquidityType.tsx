@@ -20,6 +20,7 @@ export type LiquidityTypeProps = {
   onSelect: (value: LiquidityTypeOption) => void
   tooltip?: string
   disable?: LiquidityTypeOption[]
+  isAsymAvailable?: boolean
 }
 
 export const LiquidityType = ({
@@ -28,6 +29,7 @@ export const LiquidityType = ({
   selected,
   onSelect,
   tooltip,
+  isAsymAvailable = true,
   disable = [],
 }: LiquidityTypeProps) => {
   return (
@@ -39,7 +41,7 @@ export const LiquidityType = ({
           </Label>
         )}
         <Styled.Options>
-          {!disable.includes(LiquidityTypeOption.ASSET) && (
+          {isAsymAvailable && !disable.includes(LiquidityTypeOption.ASSET) && (
             <CoreButton
               onClick={() => onSelect(LiquidityTypeOption.ASSET)}
               focused={selected === LiquidityTypeOption.ASSET}
@@ -55,7 +57,7 @@ export const LiquidityType = ({
               <Label>{poolAsset.ticker} + RUNE</Label>
             </CoreButton>
           )}
-          {!disable.includes(LiquidityTypeOption.RUNE) && (
+          {isAsymAvailable && !disable.includes(LiquidityTypeOption.RUNE) && (
             <CoreButton
               onClick={() => onSelect(LiquidityTypeOption.RUNE)}
               focused={selected === LiquidityTypeOption.RUNE}
