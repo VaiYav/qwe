@@ -716,8 +716,11 @@ export class EthChain implements IEthChain {
 
       return res?.hash ?? ''
     } catch (error) {
-      console.log(error)
-      throw Error('deposit call failed')
+      if (error?.method === 'estimateGas')
+        throw Error(
+          'Unexpected issue with estimating the gas. You may have no enough ETH.',
+        )
+      else throw Error('Deposit call failed.')
     }
   }
 
