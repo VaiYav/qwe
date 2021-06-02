@@ -29,8 +29,8 @@ export const getAssetIconUrl = (asset: Asset): string => {
       return 'https://raw.githubusercontent.com/compound-finance/token-list/master/assets/asset_DAI.svg'
     }
 
-    if (asset.ticker === 'SUSHI') {
-      return 'https://etherscan.io/token/images/sushitoken_32.png'
+    if (asset.ticker === 'ALCX') {
+      return 'https://etherscan.io/token/images/Alchemix_32.png'
     }
   }
 
