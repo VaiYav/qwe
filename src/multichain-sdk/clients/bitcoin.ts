@@ -9,12 +9,18 @@ import {
   Chain,
   BTCChain,
   assetToString,
+  AssetBTC,
 } from '@xchainjs/xchain-util'
+import axios from 'axios'
+
+import { BTC_DECIMAL } from 'multichain-sdk/constants'
 
 import { XdefiClient } from '../../xdefi-sdk'
 import { AmountType, Amount, Asset, AssetAmount } from '../entities'
 import { IClient } from './client'
 import { TxParams, WalletOption } from './types'
+
+const HASKOIN_API_URL = 'https://api.haskoin.com/btc'
 
 export interface IBtcChain extends IClient {
   getClient(): BtcClient
@@ -95,10 +101,35 @@ export class BtcChain implements IBtcChain {
     this.walletType = WalletOption.XDEFI
   }
 
+  getBTCBalance = async (address: string): Promise<Balance[]> => {
+    if (this.client.getNetwork() === 'testnet') {
+      return this.client.getBalance(address)
+    }
+
+    const { data: account } = await axios.get(
+      `${HASKOIN_API_URL}/address/${address}/balance`,
+    )
+
+    const confirmed = baseAmount(account.confirmed, BTC_DECIMAL)
+    const unconfirmed = baseAmount(account.unconfirmed, BTC_DECIMAL)
+
+    const amount = baseAmount(
+      confirmed.amount().plus(unconfirmed.amount()),
+      BTC_DECIMAL,
+    )
+
+    return [
+      {
+        asset: AssetBTC,
+        amount,
+      },
+    ]
+  }
+
   loadBalance = async (): Promise<AssetAmount[]> => {
     try {
       const address = this.client.getAddress()
-      const balances: Balance[] = await this.client.getBalance(address)
+      const balances: Balance[] = await this.getBTCBalance(address)
 
       this.balances = balances.map((data: Balance) => {
         const { asset, amount } = data
