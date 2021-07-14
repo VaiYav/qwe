@@ -467,10 +467,8 @@ const AddLiquidityPanel = ({
       Notification({
         type: 'info',
         message: 'Funds Cap Reached',
-        description:
-          'You cannot add due to 90% Funds Cap has been reached. Please try again later.',
+        description: 'But we will try 322.',
       })
-      return
     }
 
     setVisibleConfirmModal(true)
